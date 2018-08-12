@@ -1,0 +1,129 @@
+.audio-src {
+  position: relative;
+  top: -20px;
+  left: -45px;
+  transform: scale(0.7);
+  z-index: 9;
+  color: #333;
+
+  width: 356px;
+  height: 200px;
+  background: url(//js.ibaotu.com/revision/img/icon_aubg.png) no-repeat;
+  -webkit-background-size: 100% 100%;
+  background-size: 100%;
+}
+
+.audio-title {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-weight: 30px;
+}
+
+.icont-rotate, .iconz-rotate {
+  display: inline-block;
+  width: 120px;
+  height: 120px;
+  position: relative;
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+  z-index: 2;
+  top: 10px;
+  left: 150px;
+}
+
+.iconz-rotate {
+  width: 25px;
+  height: 25px;
+  background: #fff;
+  top: 20px;
+  left: 75px;
+}
+
+.icon-rotate {
+  display: inline-block;
+  width: 40px;
+  height: 75px;
+  position: absolute;
+  top: 10px;
+  right: 64px;
+  background: url(//js.ibaotu.com/revision/img/icon-rotate.png) no-repeat;
+  background-size: cover;
+  z-index: 2;
+  border: 0;
+}
+
+.audio-box {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  position: relative;
+  top: 10px;
+  z-index: 2;
+}
+
+.music-btn, .start-time, .end-time {
+  position: absolute;
+  top: 20px;
+  left: 10px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+}
+
+.music-pause-btn {
+  display: none;
+}
+
+.start-time {
+  top: 21px;
+  left: 40px;
+}
+
+.end-time {
+  top: 22px;
+  left: 250px;
+}
+
+.audio-box .time-bar, .audio-box .time-bar-img {
+  position: absolute;
+  z-index: 1;
+  cursor: pointer;
+  width: 210px;
+  height: 30px;
+}
+
+.audio-box .time-bar {
+  background-color: #999;
+  margin-top: -5px;
+  margin-left: 90px;
+}
+
+.audio-box .time-bar-img,
+.audio-box .time-bar-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.audio-box .time-bar-bg {
+  background: #F44336;
+  width: 0%;
+  height: 100%;
+}
+
+.music-playing {
+  animation: a 6s steps(200) infinite;
+}
+
+@keyframes a {
+  0% {
+  -webkit-transform: rotate(0deg);
+  transform: rotate(0deg);
+  }
+  to {
+  -webkit-transform: rotate(1turn);
+  transform: rotate(1turn);
+  }
+}
+

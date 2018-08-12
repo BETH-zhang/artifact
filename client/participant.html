@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>参加人界面</title>
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- <link rel="stylesheet" href="./css/index.css"> -->
+  <style>
+    /* 酷黑样式 */
+    body {
+      overflow: hidden;
+      /* background: #0f1316; */
+      color: #ccc;
+      background: url('./images/bg.jpeg')
+    }
+
+    #main {
+      padding: 20px;
+    }
+
+    #mess {
+      position: relative;
+      top: 20px;
+      padding: 20px;
+      width: 100%;
+      height: calc(100vh - 150px);
+      border-color: #323232;
+      border-radius: 5px;
+    }
+
+    #mess:after {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 150px);
+      background: #000;
+      opacity: 0.4;
+    }
+
+  </style>
+</head>
+<body>
+  <div id="main">
+    <div class="my-name"></div>
+    <div class="my-role"></div>
+    <div class="my-title"></div>
+    
+    <!-- Alert -->
+    <div id="mess">正在连接...</div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="mcQrcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="mc-name">
+            <input type="text" class="form-control" id="mcName" placeholder="本场名字"/>
+          </div>
+          <br />
+          <div class="mc-role">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option0">
+              <label class="form-check-label" for="inlineRadio1">我是新人</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option1">
+                <label class="form-check-label" for="inlineRadio2">工作汇报</label>
+              </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option2">
+              <label class="form-check-label" for="inlineRadio3">我要分享</label>
+            </div>
+          </div>
+          <br />
+          <input type="text" class="form-control share-title" placeholder="请填写所在部门/分享主题"/>
+          <br />
+          <button class="btn btn-primary" id="mcInput">进入</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <script src="https://cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.js"></script>
+  <script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/constant.js"></script>
+  <script src="./js/mc.js"></script>
+  <script>
+var $mess = $('#mess');
+var $mcInput = $('#mcInput');
+var $mcName = $('#mcName');
+var $main = $('#main');
+
+var queryString = utils.queryString();
+if (queryString.name) {
+  $main.show();
+} else {
+  $('#mcQrcode').modal({
+    backdrop: false
+  })
+}
+
+var logger = function(val) {
+  $mess.append(`<p>${val}</p>`);
+}
+
+var init = function(ws) {
+  var formCheckInput = null;
+
+  $('.form-check-input').change(function() {
+    formCheckInput = $(this).val()
+  });
+
+  $mcInput.click(function() {
+    if ($mcName.val()) {
+      ws.send(JSON.stringify({
+        roleType: 3,
+        data: {
+          peo: true,
+          name: $mcName.val(),
+          link: true, // 特殊标识
+          role: formCheckInput,
+          title: $('.share-title').val(),
+        }
+      }));
+    } else {
+      $('.alert').html('参会人的名字必须填写').alert()
+    }
+  });
+}
+
+var mainInit = function(ws) {
+  $('.my-name').html(`本人：${queryString.name}`);
+  $('.my-role').html(
+    queryString.role === 'option1' ? '我是新人'
+    : queryString.role === 'option2' ? '我要分享'
+      : '我是游客');
+  $('.my-title').html(queryString.title ? queryString.title : '')
+}
+
+if(window.WebSocket){
+    // var ws = new WebSocket('ws://172.16.15.185:8001');
+    // var ws = new WebSocket('ws://192.168.1.106:8001');
+    var ws = new WebSocket('ws://10.0.0.11:8001');
+    ws.onopen = function(e){
+      console.log("连接服务器成功");
+
+      ws.send(JSON.stringify({
+        roleType: 3,
+        data: {
+          peo: true,
+          name: queryString.name,
+          role: queryString.role,
+          title: queryString.title,
+        },
+      }));
+
+      if (queryString.name) {
+        mainInit(ws);
+      } else if (!queryString.name) {
+        init(ws);
+      }
+    }
+    
+    ws.onclose = function(e){
+      logger("~~服务器关闭");
+    }
+    ws.onerror = function(){
+      logger("~~连接出错");
+    }
+
+    ws.onmessage = function(e){
+      var res = JSON.parse(e.data) || {};
+      console.log(res, '????')
+      logger("~~连接成功" + ((res && (res.data.message || res.data.name)) || ''));
+      if (res.roleType === 3 && res.data.link) {
+        window.location.href = document.location.origin + document.location.pathname
+          + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
+      }
+    }
+  }
+  </script>
+</body>
+</html>

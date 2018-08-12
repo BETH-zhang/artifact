@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MC主界面</title>
+  <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="./css/index.css">
+  <link rel="stylesheet" href="./css/music.css">
+</head>
+<body>
+  <div class="header">
+    周例会<span class="mc">本周MC</span><span id="weekMc"></span>
+    <span class="time"></span>
+  </div>
+  <div class="layout flex">
+    <div class="left">
+      <h2 class="title">扫码进入</h2>
+      <div id="peoQrcode"></div>
+
+      <h2 class="title">参会列表</h2>
+      <div id="joinParticipant" class="join-list"></div>
+
+      <h2 class="title currentNum"></h2>
+    </div>
+
+    <div class="center">
+      <div class="opt">
+        <button type="button" data-step="0" class="btn btn-live btn-live0">新人介绍</button>
+        <button type="button" data-step="1" class="btn btn-live btn-live1">工作汇报</button>
+        <button type="button" data-step="2" class="btn btn-live btn-live2">趣味分享</button>
+        <button type="button" data-step="3" class="btn btn-live btn-live3">事业部前端分享</button>
+      </div>
+
+      <div class="ppt">
+        <img class="ppt0" src="./images/live1.jpeg" />
+        <img class="ppt1" src="./images/live2.jpeg" />
+        <img class="ppt2" src="./images/live3.jpeg" />
+        <img class="ppt3" src="./images/live4.jpeg" />
+      </div>
+
+      <div class="share-lists">
+        <div class="share-list"></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="title"><span>播放区</span></div>
+
+      <!-- 音悦台 -->
+      <div class="music-item">
+        <div class="audio-src">
+          <div class="audio-title">此时此刻</div>
+          <!--音频列表-->
+          <div class="content-index clearfix js_clickbtn">
+            <div class="souse-img start-rotate">
+              <img src="./images/cover.jpg" alt="声波图" class="icont-rotate"/>
+              <div class='iconz-rotate'></div>
+              <div class='icon-rotate'></div>
+            </div>
+            <!--音频box-->
+            <div class="audio-box clearfix">
+              <div bindtap='clickAudio'>
+                <img class="music-btn music-pause-btn" src="../../images/pause.png" />
+                <img class='music-btn music-play-btn' src="../../images/play.png" />
+              </div>
+              <span class="start-time">00:00</span>
+              <div class="time-bar">
+                <img class="time-bar-img" src="//js.ibaotu.com/revision/img/max-shengbo.png" alt="声波图"/>
+                <div class='time-bar-bg' style="width: 20px;"></div>
+              </div>
+              <span class="end-time">00:00</span>
+              <audio class='hide' src="./data/1.mp3" id="myAudio" controls loop></audio>
+            </div> 
+          </div>
+        </div>
+      </div>
+ 
+      <div class="title"><span>聊天区</span></div>
+      <!-- Alert -->
+      <div class="talk-list">
+        <div id="mess"></div>
+      </div>
+ 
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="mcQrcode" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <!-- <h5 class="modal-title" id="exampleModalLongTitle">本周MC请扫描入场</h5> -->
+        </div>
+        <div class="modal-body">
+          <div class="mc-qrcode">
+            <div id="qrcode"></div>
+          </div>
+          <div class="mc-name">
+            <input type="text" class="form-control" id="mcName" placeholder="本场名字"/>
+            <button class="btn btn-primary" id="mcInput">进入</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <script src="https://cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.js"></script>
+  <script src="https://cdn.bootcss.com/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+  <script src="./js/utils.js"></script>
+  <script src="./js/constant.js"></script>
+  <script src="./js/mc.js"></script>
+  <script src="./js/music.js?t=5"></script>
+  <script>
+var $mess = $('#mess');
+var $mcInput = $('#mcInput');
+var $mcName = $('#mcName');
+var $main = $('#main');
+var $mainBtn = $('#mainBtn');
+var $weekMc = $('#weekMc');
+var $peoQrcode = $('#peoQrcode');
+var currentStep = 1;
+bbMusic.init();
+
+var Component = {
+  Avatar: function(item, index) {
+    var className = Constant.classNames[index % 7];
+    return `<div class="avatar-container avatar-${item}">
+      <div class="avatar border ${className}">${item}</div>
+      ${item}
+      <div class="opt">
+        <div data-name="${item}" class="call">呼叫</div>
+        <div data-name="${item}" class="delete">退出</div>
+      </div>
+    </div>`;
+  },
+  Message: function(type, name, message) {
+    var className = Constant.classNames[type === 7 ? 7 : type % 7];
+    return `<div class="message-item">
+      <div class="avatar border ${className}">${name}</div>
+      <div class="msg">${message}</div>
+    </div>`;
+  },
+  LiveIndex: function(name, index, role) {
+    var className = Constant.classNames[1];
+    var value = '新人介绍';
+    if (role === 'option1') {
+      className = Constant.classNames[5];
+      value = '工作汇报';
+    } else if (role === 'option2') {
+      className = Constant.classNames[6];
+      value = '趣味分享';
+    } else if (role === 'option3') {
+      className = Constant.classNames[8];
+      value = '事业部前端分享';
+    }
+    return `<div class="live-list">
+      <div class="live-index list-index${index + 1}"><div class="live-rotate"></div></div>
+      <div class="live-avatar">
+        <div class="avatar border ${className}">${value}</div>
+        <p>${name}</p>
+      </div>
+    </div>`;
+  }
+}
+
+function updatePPT(index) {
+  var currentIndex = index || 0;
+  // 初始化
+  $('.btn-live').removeClass('btn-active');
+  $('.ppt img').hide();
+
+  // 处理当前
+  $(`.btn-live${currentIndex}`).addClass('btn-active');
+  $(`.ppt${currentIndex}`).show();
+}
+
+function initLocalData() {
+  var list = localStorage.getItem('peos') && JSON.parse(localStorage.getItem('peos'));
+  if (list && list.length) {
+    var listEle = list.map(function(item, index) {
+      return Component.Avatar(item, index)
+    });
+    $('#joinParticipant').html(listEle.join(''))
+    $('.currentNum').html(`当前人数:${list.length}人`)
+  }
+  updatePPT();
+
+  var lives = localStorage.getItem('lives') && JSON.parse(localStorage.getItem('lives'));
+  mainFuncs.joinLiveList(lives);
+}
+
+var queryString = utils.queryString();
+if (queryString.name) {
+  $main.show();
+} else if (queryString.mc) {
+  $('.mc-qrcode').hide();
+  $('#mcQrcode').modal({
+    backdrop: false
+  })
+} else {
+  var realPath = document.location.href + '?mc=true';
+  $('#qrcode').qrcode({
+    text: realPath,  //设置二维码内容
+    render: "canvas",//设置渲染方式
+    background: "#ffc107",//背景颜色
+  });
+  $('.mc-name').hide();
+  $('#mcQrcode').modal({
+    backdrop: false
+  })
+}
+
+var openText = ['name', 'MC Connect', 'MC Start'];
+var openRole = [2, 1, 0];
+var openType = null;
+if (queryString.name) {
+  // mc链接成功
+  openType = queryString.name;
+} else if (queryString.mc) {
+  // mc链接中
+  openType = 1;
+} else {
+  // mc界面
+  openType = 2;
+}
+
+var logger = function(type, name, val) {
+  if (utils.isNumber(openType)) {
+    $mess.append(Component.Message(type < 7 ? type : 7, name, openText[openType] + val));
+  } else {
+    $mess.append(Component.Message(type < 7 ? type : 7, name, val));
+  }
+}
+
+var init = function(ws) {
+  $mcInput.click(function() {
+    if ($mcName.val()) {
+      ws.send(JSON.stringify({
+        roleType: 1,
+        data: {
+          mc: true,
+          name: $mcName.val(), 
+        }
+      }));
+    } else {
+      $('.alert').html('MC的名字必须填写').alert()
+    }
+  });
+}
+
+var mainFuncs = {
+  joinParticipant: function(data) {
+    if (!$('.' + data.currentPeo).length) {
+      if (!$('.avatar-' + data.currentPeo).length) {
+        $('#joinParticipant').append(Component.Avatar(data.currentPeo, data.peos.length))
+      }
+      $('.currentNum').html(`当前人数:${data.peos.length}人`)
+    }
+  },
+  joinLiveList: function(lives) {
+    if (lives) {
+      var livesAry = Object.keys(lives);
+      var livesList = livesAry.map(function(item, index) {
+        if ('option' + currentStep !== lives[item].role) {
+          return null;
+        }
+        return Component.LiveIndex(item, currentStep - 1, lives[item].role);
+      })
+      $('.share-list').html(livesList.join('')).css({ width: livesAry.length * (120 + 24) + 'px' })
+    }
+  }
+}
+
+var mainInit = function(ws) {
+  $weekMc.html(queryString.name);
+  setInterval(function() {
+    $('.time').html(new Date());
+    bbMusic.updateProgress();
+  }, 1000);
+  $mainBtn.click(function() {
+    ws.send(JSON.stringify({
+      roleType: 2,
+      data: {
+        mc: true,
+        name: $mcName.val(),
+        message: '你好吗？'
+      },
+    }));
+  });
+  var realPath1 = document.location.origin + '/participant.html';
+  console.log(realPath1)
+  $peoQrcode.qrcode({
+    text: realPath1,  //设置二维码内容
+    width: 160,
+    height: 160,
+    render: "canvas",//设置渲染方式
+    background: "#3b3c40",//背景颜色
+  });
+
+  initWs(ws);
+
+  $('.btn-live').click(function() {
+    var index = $(this).attr('data-step');
+    currentStep = index;
+    
+    updatePPT(index);
+    var lives = localStorage.getItem('lives') && JSON.parse(localStorage.getItem('lives'));
+    mainFuncs.joinLiveList(lives);
+  })
+}
+
+function bindDelete() {
+  var name = $(this).attr('data-name');
+  ws.send(JSON.stringify({
+    roleType: 2,
+    data: {
+      type: 'delete',
+      mc: true,
+      name,
+      message: '删除' + name
+    }
+  }));
+  $(`.avatar-${name}`).remove();
+  var list = localStorage.getItem('peos') && JSON.parse(localStorage.getItem('peos'));
+  if (list.length) {
+    $('.currentNum').html(`当前人数:${list.length - 1}人`)
+  }
+}
+
+function bindCall() {
+  var name = $(this).attr('data-name');
+  ws.send(JSON.stringify({
+    roleType: 2,
+    data: {
+      type: 'call',
+      mc: true,
+      name,
+      message: '呼叫' + name
+    },
+  }));
+}
+
+var initWs = function(ws) {
+  $('.call').unbind('click', bindCall);
+  $('.delete').unbind('click', bindDelete);
+  $('.call').bind('click', bindCall);
+  $('.delete').bind('click', bindDelete);
+}
+
+if(window.WebSocket){
+  initLocalData();
+
+    // var ws = new WebSocket('ws://172.16.15.185:8001');
+    // var ws = new WebSocket('ws://192.168.1.106:8001');
+    var ws = new WebSocket('ws://10.0.0.11:8001');
+    ws.onopen = function(e){
+      console.log("连接服务器成功");
+      var role = null;
+      if (utils.isNumber(openType)) {
+        role = openRole[openType];
+      } else {
+        role = 2;
+      }
+      ws.send(JSON.stringify({
+        roleType: role,
+        data: {
+          mc: queryString.mc,
+          name: queryString.name
+        },
+      }));
+
+      if (queryString.name) {
+        mainInit(ws);
+      } else if (!queryString.name && queryString.mc) {
+        init(ws);
+      }
+    }
+    
+    ws.onclose = function(e){
+      logger(0, "MC", "~~服务器关闭");
+    }
+    ws.onerror = function(){
+      logger(0, "MC", "~~连接出错");
+    }
+
+    ws.onmessage = function(e){
+      var res = JSON.parse(e.data) || {};
+      if (res.roleType === 1 && res.data.name) {
+        window.location.href = document.location.origin + document.location.pathname
+          + '?name=' + res.data.name;
+      } else if (res.roleType === 3 && res.data.peos) {
+        mainFuncs.joinParticipant(res.data);
+        mainFuncs.joinLiveList(res.data.lives);
+        localStorage.setItem('peos', JSON.stringify(res.data.peos))
+        localStorage.setItem('lives', JSON.stringify(res.data.lives))
+        var index = res.data.peos.indexOf(res.data.currentPeo);
+        logger(index, res.data.currentPeo, res.data.currentPeo + '加入~~~');
+      } else if (res.roleType === 2 && res.data.message) {
+        mainFuncs.joinLiveList(res.data.lives);
+        logger(7, queryString.name, (res.data && res.data.message));
+        localStorage.setItem('peos', JSON.stringify(res.data.peos))
+        localStorage.setItem('lives', JSON.stringify(res.data.lives));
+      } else {
+        logger(7, res.data.name, "~~连接成功");
+      }
+      initWs(ws);
+    }
+  }
+  </script>
+</body>
+</html>

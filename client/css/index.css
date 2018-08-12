@@ -1,0 +1,413 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* globle */
+.modal {
+  top: 50px;
+}
+
+#main {
+  display: none;
+}
+
+.mc-qrcode,
+.mc-name {
+  width: 100%;
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.btn {
+  min-width: 120px;
+  margin-top: 20px;
+}
+
+.avatar-container {
+  position: relative;
+  width: 100%;
+  height: 42px;
+  line-height: 42px;
+  margin-bottom: 10px;
+  padding-left: 12px;
+  padding-right: 12px;
+  color: #34353a;
+}
+
+.avatar {
+  float: left;
+  margin-right: 5px;
+  overflow: hidden;
+  display: inline-block;
+  width: 42px;
+  height: 42px;
+  line-height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.opt {
+  cursor: pointer;
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  right: 12px;
+}
+
+.opt .call,
+.opt .delete {
+  display: inline-block;
+}
+
+.border-primary {
+  background: #007bff!important;
+}
+
+.border-secondary {
+  background: #6c757d!important;
+}
+
+.border-success {
+  background: #28a745!important;
+}
+
+.border-danger {
+  background: #dc3545!important;
+}
+
+.border-warning {
+  background: #ffc107!important;
+}
+
+.border-info {
+  background: #17a2b8!important;
+}
+
+.border-dark {
+  background: #343a40!important;
+}
+
+.border-main {
+  background: #c61e61!important;
+}
+
+.border-gray {
+  background: #1b1f22!important;
+}
+
+.hide {
+  display: none;
+}
+
+/* 酷黑样式 */
+body {
+  overflow: hidden;
+  /* background: #0f1316; */
+  color: #ccc;
+  background: url('../images/bg.jpeg')
+}
+
+.layout {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.left {
+  width: 210px;
+}
+
+.right {
+  width: 265px;
+}
+
+.center,
+.main {
+  min-height: 90vh;
+}
+
+/* flex */
+.flex {
+  display: flex;
+}
+.flex .left,
+.flex .right {
+  flex-grow: 0;
+}
+.flex .center {
+  flex: 1;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+
+.header {
+  /* margin-bottom: 14px; */
+  height: 56px;
+  color: #c61e61;
+  font-size: 16px;
+  background: #000;
+  border-bottom: 14px solid #0f1316;
+}
+
+.header .mc {
+  display: inline-block;
+  padding: 3px;
+  background: #c61e61;
+  color: #fff;
+  height: 26px;
+  line-height: 26px;
+  box-sizing: content-box;
+  border-radius: 5px;
+  margin: 5px;
+}
+
+.header .time {
+  float: right;
+  line-height: 42px;
+  color: #333;
+  padding-right: 10px;
+}
+
+.left {
+  background: #000;
+}
+
+.left .title {
+  height: 42px;
+  line-height: 42px;
+  background: #080808;
+  color: #393a3f;
+  font-size: 16px;
+  text-align: center;
+  border-bottom: 1px solid #121212;
+}
+
+.left .join-list {
+  overflow-y: scroll;
+  height: calc(100vh - 400px);
+}
+
+.center {
+  position: relative;
+}
+
+.right {
+  /* padding-top: 150px; */
+  /* background: #000; */
+}
+
+.right .title {
+  position: relative;
+  width: 100px;
+  height: 42px;
+  line-height: 42px;
+  color: #393a3f;
+  font-size: 16px;
+  text-align: center;
+  border: 1px solid #393a3f;
+  border-radius: 5px 5px 0 0;
+  border-bottom: 0;
+}
+
+.right span {
+  position: relative;
+  z-index: 1;
+}
+
+.right .title:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 42px;
+  background: #000;
+  opacity: 0.4;
+}
+
+.right .music-item {
+  position: relative;
+  height: 160px;
+  margin-bottom: 12px;
+  border: 1px solid #393a3f;
+  border-radius: 0 0 5px 5px;
+  border-top: 0;
+}
+
+.right .talk-list:before,
+.right .music-item:before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: calc(100% - 100px);
+  height: 1px;
+  background: #393a3f; 
+  z-index: 2;
+}
+
+.right .talk-list:after,
+.right .music-item:after {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 160px;
+  background: #000;
+  opacity: 0.4;
+}
+
+.right .talk-list {
+  position: relative;
+  color: #34353a;
+  border: 1px solid #393a3f;
+  border-radius: 0 0 5px 5px;
+  border-top: 0
+}
+
+.right .talk-list:after {
+  height: calc(100vh - 310px);
+}
+
+.right #mess {
+  padding: 12px;
+  position: relative;
+  z-index: 1;
+  height: calc(100vh - 310px);
+  overflow-y: scroll;
+}
+
+.right .message-item {
+  margin-bottom: 12px;
+}
+
+.right .message-item .msg {
+  border-radius: 50px;
+  line-height: 42px;
+  border: 1px solid #393a3f;
+}
+
+.btn-live {
+  color: #7b7c7e;
+  background-color: #262827;
+  border-color: #323232;
+  opacity: 0.85;
+}
+
+.btn-active {
+  color: #f7d0de;
+  background-color: #e93169;
+  border-color: #c74a72;
+}
+
+.btn-live:hover {
+  opacity: 1;
+}
+
+.center .ppt {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 400px;
+  background-color: #000;
+  background-image: url('../images/live-bg.jpeg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.center .ppt img {
+  width: 100%;
+  display: none;
+}
+
+.center .share-lists {
+  position: fixed;
+  bottom: 0;
+  left: 230px;
+  width: calc(100% - 515px);
+  overflow-x: scroll;
+  overflow-y: hidden;
+  height: 120px;
+  background: #000;
+}
+
+.center .share-list {
+  min-width: calc(100% - 515px);
+}
+
+.live-list {
+  position: relative;
+  padding-left: 58px;
+  margin: 12px;
+  display: inline-block;
+  float: left;
+  width: 120px;
+  height: 98px;
+}
+
+.live-avatar {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.live-avatar .avatar {
+  float: initial;
+}
+
+.live-avatar p {
+  overflow: hidden;
+}
+
+.live-index {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0 auto;
+  display: inline-block;
+  width: 58px;
+  height: 98px;
+}
+
+.list-index1 {
+  background: url('../images/index1.png')
+}
+
+.list-index2 {
+  background: url('../images/index2.png')
+}
+
+.list-index3 {
+  background: url('../images/index3.png')
+}
+
+.list-index4 {
+  background: url('../images/index4.png')
+}
+
+.list-index5 {
+  background: url('../images/index5.png')
+}
+
+.list-index6 {
+  background: url('../images/index6.png')
+}
+
+.list-index7 {
+  background: url('../images/index7.png')
+}
+
+.list-index8 {
+  background: url('../images/index8.png')
+}
+
+.list-index9 {
+  background: url('../images/index9.png')
+}
