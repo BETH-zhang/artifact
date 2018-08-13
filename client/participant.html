@@ -130,6 +130,10 @@
         <br />
         <div class="mc-role">
           <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio0" value="option-1">
+            <label class="form-check-label" for="inlineRadio0">我是游客</label>
+          </div>
+          <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option0">
             <label class="form-check-label" for="inlineRadio1">我是新人</label>
           </div>
@@ -208,9 +212,11 @@
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
   <script src="./js/mc.js"></script>
+  <!-- <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script> -->
   <!-- <script src="./js/music.js?t=5"></script> -->
  
   <script>
+    // var vConsole = new VConsole();
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
 var $mcName = $('#mcName');
@@ -293,7 +299,7 @@ var Component = {
 }
 
 var logger = function(val, text) {
-  $('#mess').prepend(`<p><span class="rotate"></span>${val}${text && `<span class="active">${text}</span>`}</p>`);
+  $('#mess').prepend(`<p><span class="rotate"></span>${val}${text ? `<span class="active">${text}</span>` : ''}</p>`);
 }
 
 var init = function(ws) {
