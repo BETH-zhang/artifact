@@ -105,7 +105,7 @@
       opacity: 0.8;
     }
 
-    #mess p span {
+    #mess p span.rotate {
       margin-top: 3px;
       margin-right: 5px;
         display: inline-block;
@@ -114,6 +114,10 @@
         height: 16px;
         background: #E91E63;
         border-radius: 50%;
+    }
+
+    #mess p .active {
+      color: aquamarine;
     }
 
   </style>
@@ -288,8 +292,8 @@ var Component = {
   }
 }
 
-var logger = function(val) {
-  $('#mess').prepend(`<p><span></span>${val}</p>`);
+var logger = function(val, text) {
+  $('#mess').prepend(`<p><span class="rotate"></span>${val}${text && `<span class="active">${text}</span>`}</p>`);
 }
 
 var init = function(ws) {
@@ -317,12 +321,19 @@ var init = function(ws) {
   });
 }
 
+var currentRoleText = function(role) {
+  var text = {
+    'option0': '我是新人',
+    'option1': '工作汇报',
+    'option2': '我要分享',
+    'option3': '老板分享',
+  };
+  return text[role] || '我是游客'
+};
+
 var mainInit = function(ws) {
   $('.my-name').html(`欢迎：${queryString.name}`);
-  $('.my-role').html(
-    queryString.role === 'option1' ? '我是新人'
-    : queryString.role === 'option2' ? '我要分享'
-      : '我是游客');
+  $('.my-role').html(currentRoleText(queryString.role));
   $('.my-title').html(queryString.title ? queryString.title : '')
 
   updatePPT();
@@ -406,7 +417,7 @@ if(window.WebSocket){
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
       console.log(res, 'res')
-      if (res.roleType === 3 && res.data.link) {
+      if (res.roleType === 3 && res.data.link && !queryString.name) {
         window.location.href = document.location.origin + document.location.pathname
           + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
       } else if (res.roleType === 2 && res.data.type === 'call') {
@@ -416,10 +427,10 @@ if(window.WebSocket){
         if (!frist) {
           $('.apply-music').show();
         } else {
-          $('.call-you').show();
+          $('.call-you').show()
         }
       } else if (res.roleType === 3 && res.data.peo) {
-        logger(res.data.name + '加入~~~');
+        logger(res.data.name + '加入~~~', res.data.role && `${currentRoleText(res.data.role)} ${res.data.title}`);
       } else if (res.roleType === 3 && res.data.type === 'call') {
         logger(((res && (res.data.message || res.data.name)) || ''));
         $('.call-you').hide();

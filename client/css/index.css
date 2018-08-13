@@ -304,6 +304,10 @@ body {
   border: 1px solid #393a3f;
 }
 
+.right .message-item .msg .active {
+  color: aquamarine;
+}
+
 .btn-live {
   color: #7b7c7e;
   background-color: #262827;

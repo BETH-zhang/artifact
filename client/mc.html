@@ -137,11 +137,11 @@ var Component = {
       </div>
     </div>`;
   },
-  Message: function(type, name, message, startTime) {
+  Message: function(type, name, message, startTime, text) {
     var className = Constant.classNames[type === 7 ? 7 : type % 7];
     return `<div class="message-item message-${startTime}">
       <div class="avatar border ${className}">${name}</div>
-      <div class="msg">${message}</div>
+      <div class="msg">${message}${!!text ? `<span class="active">${text}</span>` : ''}</div>
     </div>`;
   },
   LiveIndex: function(name, index, role, title) {
@@ -230,12 +230,12 @@ if (queryString.name) {
   openType = 2;
 }
 
-var logger = function(type, name, val) {
+var logger = function(type, name, val, text) {
   var startTime = (new Date()).getTime();
   if (utils.isNumber(openType)) {
-    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, openText[openType] + val), startTime);
+    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, openText[openType] + val), startTime, text);
   } else {
-    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, val, startTime));
+    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, val, startTime, text));
   }
   $mess.animate({scrollTop: $('.message-' + startTime).offset().top}, 1000);
 }
@@ -360,6 +360,16 @@ function bindCall() {
   }));
 }
 
+var currentRoleText = function(role) {
+  var text = {
+    'option0': '我是新人',
+    'option1': '工作汇报',
+    'option2': '我要分享',
+    'option3': '老板分享',
+  };
+  return text[role] || '我是游客'
+};
+
 var initWs = function(ws) {
   $('.call').unbind('click', bindCall);
   $('.delete').unbind('click', bindDelete);
@@ -405,6 +415,7 @@ if(window.WebSocket){
 
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
+      console.log(res, 'res')
       if (res.roleType === 1 && res.data.name) {
         window.location.href = document.location.origin + document.location.pathname
           + '?name=' + res.data.name;
@@ -414,7 +425,8 @@ if(window.WebSocket){
         localStorage.setItem('peos', JSON.stringify(res.data.peos))
         localStorage.setItem('lives', JSON.stringify(res.data.lives))
         var index = res.data.peos.indexOf(res.data.currentPeo);
-        logger(index, res.data.currentPeo, res.data.currentPeo + '加入~~~');
+        var currentData = res.data.lives[res.data.currentPeo];
+        logger(index, res.data.currentPeo, res.data.currentPeo + '加入~~~', currentData.role && `${currentRoleText(currentData.role)} ${currentData.title}`);
       } else if (res.roleType === 3 && res.data.type === 'call') {
         var peos = localStorage.getItem('peos');
         var index = peos.indexOf(res.data.name);
