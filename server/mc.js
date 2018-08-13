@@ -18,7 +18,20 @@ var send = function(conn, text) {
   }
 }
 
-var sendTypeForPeo = function(data, callback) {
+
+var recursionAsync = function(count, data, source, callback) {
+  var self = this;
+  console.log(count, peos[count])
+  if (count === 0) {
+    console.log('All is Done!');
+  }	else {
+    count -= 1;
+    send(data[count], source);
+    recursionAsync(count, data, source, callback);
+  }
+};
+
+var sendTypeForPeo = function(data, source, callback) {
   if (!data.name || !data.type) {
     return;
   }
@@ -26,6 +39,8 @@ var sendTypeForPeo = function(data, callback) {
   console.log('~~~data', data)
   switch(data.type) {
     case 'call':
+      var callConn = peoReady[index];
+      send(callConn, source);
       break;
     case 'delete':
       peos.splice(index, 1)
@@ -33,6 +48,11 @@ var sendTypeForPeo = function(data, callback) {
       delete lives[data.name]
       break;
     case 'message':
+      break;
+    case 'ppt':
+      if (peoReady && peoReady.length) {
+        recursionAsync(peoReady.length, peoReady, source, callback)
+      }
       break;
     default:
       break;
@@ -53,7 +73,7 @@ var server = ws.createServer(function(conn){
           mcs[req.roleType] = req.roleType;
           mcReady[req.roleType] = conn;
         }else if (req.roleType === 3) {
-          if (req.data.name) {
+          if (req.data.name && req.data.peo) {
             var index = peos.indexOf(req.data.name);
             if (peos.indexOf(req.data.name) === -1) {
               peos.push(req.data.name);
@@ -79,7 +99,7 @@ var server = ws.createServer(function(conn){
           send(mcReady[1], source)
         } else if (req.roleType === 2) {
           if (req.data.type) {
-            sendTypeForPeo(req.data, function() {
+            sendTypeForPeo(req.data, source, function() {
               send(mcReady[2], JSON.stringify({
                 roleType: req.roleType,
                 data: Object.assign({}, req.data, {
@@ -93,7 +113,7 @@ var server = ws.createServer(function(conn){
           }
         } else if (req.roleType === 3) {
           send(conn, source)
-          if (req.data.name) {
+          if (req.data.name && req.data.peo) {
             send(mcReady[2], JSON.stringify({
               roleType: 3,
               data: {
@@ -103,11 +123,13 @@ var server = ws.createServer(function(conn){
                 lives,
               },
             }))
+          } else if (req.data.name && req.data.type === 'call') {
+            send(mcReady[2], source);
           }
         } else {
           // 所有数据都会返回过去
           send(conn, source)
-        } 
+        }
     })
 
     conn.on("close", function (code, reason) {
