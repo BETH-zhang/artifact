@@ -51,7 +51,7 @@ var sendTypeForPeo = function(data, source, callback) {
       break;
     case 'ppt':
       if (peoReady && peoReady.length) {
-        recursionAsync(peoReady.length, peoReady, source, callback)
+        recursionAsync(peoReady.length, peoReady, source)
       }
       break;
     default:
@@ -123,6 +123,9 @@ var server = ws.createServer(function(conn){
                 lives,
               },
             }))
+            if (peoReady && peoReady.length) {
+              recursionAsync(peoReady.length, peoReady, source)
+            }
           } else if (req.data.name && req.data.type === 'call') {
             send(mcReady[2], source);
           }

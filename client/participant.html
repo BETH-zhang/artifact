@@ -58,17 +58,17 @@
       display: none;
     }
 
-    .call-you {
+    .call-you,
+    .apply-music {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 350px;
-      height: 400px;
-      margin-top: -200px;
-      margin-left: -175px;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100vh;
       display: none;
       text-align: center;
       z-index: 9;
+      background: #000;
     }
 
     .call-you img {
@@ -102,13 +102,23 @@
       border-color: #323232;
       border-radius: 5px;
       background: #000;
-      opacity: 0.4;
+      opacity: 0.8;
+    }
+
+    #mess p span {
+      margin-top: 3px;
+      margin-right: 5px;
+        display: inline-block;
+        float: left;
+        width: 16px;
+        height: 16px;
+        background: #E91E63;
+        border-radius: 50%;
     }
 
   </style>
 </head>
 <body>
-
     <div class="model">
         <div class="mc-name">
           <input type="text" class="form-control" id="mcName" placeholder="你的名字"/>
@@ -152,6 +162,9 @@
       <img src="./images/call.gif" />
       <button class="btn btn-primary" id="replay-you">我在我在</button>
     </div>
+    <div class="apply-music">
+        <button class="btn btn-primary" id="apply-music">允许音频播放</button>
+    </div>
     
     <!-- Alert -->
     <div id="mess">正在连接...</div>
@@ -191,7 +204,7 @@
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
   <script src="./js/mc.js"></script>
-  <script src="./js/music.js?t=5"></script>
+  <!-- <script src="./js/music.js?t=5"></script> -->
  
   <script>
 var $mess = $('#mess');
@@ -208,6 +221,30 @@ if (queryString.name) {
   $main.hide();
   $('.model').show();
 }
+
+var frist = false;
+var musicEle = $("#myAudio")[0];
+$('.apply-music').on('touchstart',function(){
+    if(musicEle.paused){
+        musicEle.play();
+    }else{
+        musicEle.pause();
+    }
+    $('.apply-music').hide();
+    $('.call-you').show();
+    frist = true;
+});
+
+$('.apply-music').on('click',function(){
+    if(musicEle.paused){
+        musicEle.play();
+    }else{
+        musicEle.pause();
+    }
+    $('.apply-music').hide();
+    $('.call-you').show();
+    frist = true;
+});
 
 function updatePPT(index) {
   var currentIndex = index || 0;
@@ -252,7 +289,7 @@ var Component = {
 }
 
 var logger = function(val) {
-  $('#mess').prepend(`<p>${val}</p>`);
+  $('#mess').prepend(`<p><span></span>${val}</p>`);
 }
 
 var init = function(ws) {
@@ -302,6 +339,39 @@ var mainInit = function(ws) {
   });
 }
 
+  // 音乐播放
+  function backgroundMusic(audio){
+    // 自动播放音乐效果，解决浏览器或者APP自动播放问题
+    if(audio.paused){
+        audio.load();
+        audio.play();
+    }
+    function musicInBrowserHandler() {
+        if(audio.paused){
+            audio.load();
+            audio.play();
+        }
+        document.body.removeEventListener('touchstart', musicInBrowserHandler);
+    }
+    document.body.addEventListener('touchstart', musicInBrowserHandler);
+
+    // 自动播放音乐效果，解决微信自动播放问题
+    function musicInWeixinHandler() {
+        if(audio.paused){
+            audio.load();
+            audio.play();
+        }
+        document.addEventListener("WeixinJSBridgeReady", function () {
+            if(audio.paused){
+                audio.load();
+                audio.play();
+            }
+        }, false);
+        document.removeEventListener('DOMContentLoaded', musicInWeixinHandler);
+    }
+    document.addEventListener('DOMContentLoaded', musicInWeixinHandler);
+  }
+
 if(window.WebSocket){
     var ws = new WebSocket('ws://172.16.15.185:8001');
     // var ws = new WebSocket('ws://192.168.1.106:8001');
@@ -341,12 +411,22 @@ if(window.WebSocket){
           + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
       } else if (res.roleType === 2 && res.data.type === 'call') {
         logger("MC呼叫你~~~~");
-        bbMusic.init('auto');
-        $('.call-you').show(); 
+        // bbMusic.init('auto');
+        backgroundMusic(musicEle);
+        if (!frist) {
+          $('.apply-music').show();
+        } else {
+          $('.call-you').show();
+        }
+      } else if (res.roleType === 3 && res.data.peo) {
+        logger(res.data.name + '加入~~~');
       } else if (res.roleType === 3 && res.data.type === 'call') {
         logger(((res && (res.data.message || res.data.name)) || ''));
         $('.call-you').hide();
-        bbMusic.audioPause();
+        // bbMusic.audioPause();
+        if(!musicEle.paused){
+          musicEle.pause();
+        } 
       } else if (res.roleType === 2 && res.data.type === 'ppt') {
         logger(((res && (res.data.message || res.data.name)) || '')); 
         updatePPT(res.data.page);
@@ -355,6 +435,8 @@ if(window.WebSocket){
       }
     }
   }
+
+
   </script>
 </body>
 </html>
