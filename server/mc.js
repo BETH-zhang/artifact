@@ -18,7 +18,6 @@ var send = function(conn, text) {
   }
 }
 
-
 var recursionAsync = function(count, data, source, callback) {
   var self = this;
   console.log(count, peos[count])
@@ -143,4 +142,5 @@ var server = ws.createServer(function(conn){
       console.log("服务异常关闭")
     });
 }).listen(8001)
+
 console.log("WebSocket建立完毕")
