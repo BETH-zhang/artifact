@@ -11,6 +11,9 @@
   * 2.如果有一个模块慢了，其他模块需要进行自动对齐
   * 3.如果有一个模块快了，自己需要慢下来（以慢的为基准）
   * 4.如何实现链式动画播放
+  * 5.如何处理时间差
+  * 6.实现链式调用
+  * 7.支持监听progress
   */
 
   (function(global, factory) {
@@ -130,6 +133,75 @@
     }
 
     /**
+     * create a classNames
+     */
+    function classNames () {
+      var classes = [];
+
+      for (var i = 0; i < arguments.length; i++) {
+          var arg = arguments[i];
+          if (!arg) continue;
+
+          var argType = typeof arg;
+
+          if (argType === 'string' || argType === 'number') {
+              classes.push(arg);
+          } else if (Array.isArray(arg) && arg.length) {
+              var inner = classNames.apply(null, arg);
+              if (inner) {
+                  classes.push(inner);
+              }
+          } else if (argType === 'object') {
+              for (var key in arg) {
+                  if (Object.prototype.hasOwnProperty.call(arg, key) && arg[key]) {
+                      classes.push(key);
+                  }
+              }
+          }
+      }
+
+      return classes.join(' ');
+    }
+
+    /**
+     * create a styles
+     */
+    function styleObjToString () {
+      var styles = [];
+
+      for (var i = 0; i < arguments.length; i++) {
+          var arg = arguments[i];
+          if (!arg) continue;
+          var argType = typeof arg;
+
+          if (argType === 'object') {
+              for (var key in arg) {
+                  if (Object.prototype.hasOwnProperty.call(arg, key)) {
+                      styles.push(key + ':' + arg[key])
+                  }
+              }
+          }
+      }
+
+      return styles.join(';');
+    }
+
+    /**
+     * merge object
+     */
+    var _extends = Object.assign || function (target) {
+      for (var i = 1; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+              if (Object.prototype.hasOwnProperty.call(source, key)) {
+                  target[key] = source[key];
+              }
+          }
+      }
+      return target;
+    };
+
+    /**
      * Clone an array, works for array-like too
      */
     function cloneArray(arrayLike) {
@@ -197,6 +269,66 @@
       }
     }
 
+    function PubSub() {
+      this.handlers = {};
+    }
+    PubSub.prototype = {
+      // 订阅事件
+      on: function(eventType, handler){
+          var self = this;
+          if(!(eventType in self.handlers)) {
+              self.handlers[eventType] = [];
+          }
+          self.handlers[eventType].push(handler);
+          return this;
+      },
+        // 触发事件(发布事件)
+      emit: function(eventType){
+          var self = this;
+          var handlerArgs = Array.prototype.slice.call(arguments,1);
+          for(var i = 0; i < self.handlers[eventType].length; i++) {
+            self.handlers[eventType][i].apply(self,handlerArgs);
+          }
+          return self;
+      },
+      // 删除订阅事件
+      off: function(eventType, handler){
+          var currentEvent = this.handlers[eventType];
+          var len = 0;
+          if (currentEvent) {
+              len = currentEvent.length;
+              for (var i = len - 1; i >= 0; i--){
+                  if (currentEvent[i] === handler){
+                      currentEvent.splice(i, 1);
+                  }
+              }
+          }
+          return this;
+      }
+    };
+
+    // var pubsub = new PubSub();
+    // var callback = function(data){
+    //     console.log(data);
+    // };
+
+    // //订阅事件A
+    // pubsub.on('A', function(data){
+    //     console.log(1 + data);
+    // });
+    // pubsub.on('A', function(data){
+    //     console.log(2 + data);
+    // });
+    // pubsub.on('A', callback);
+
+    // //触发事件A
+    // pubsub.emit('A', '我是参数');
+
+    // //删除事件A的订阅源callback
+    // pubsub.off('A', callback);
+
+    // pubsub.emit('A', '我是第二次调用的参数');
+
     /**
      * init a action
      */
@@ -205,7 +337,9 @@
     /**
      * the core source
      */
+    var DURATION_FAST = 200;
     var DURATION_NORMAL = 400;
+    var DURATION_SLOW = 600;
     var DEFAULT_CACHE = true;
     var DEFAULT_DELAY = 0;
     var DEFAULT_DURATION = DURATION_NORMAL;
@@ -357,9 +491,29 @@
       }
     }
 
-    /**
-     * 
-     */
+    var newSetInterval = function(callback, interval) {
+      var id = Math.random();
+      var obj = {};
+      var index = 0;
+      var timer = null;
+      var timeoutTimer = function(callback, interval) {
+        index ++;
+        timer = setTimeout(() => {
+          isFunction(callback) && callback();
+          timeoutTimer(callback, interval);
+        }, interval);
+        obj[id] = timer;
+      }
+    
+      timeoutTimer(callback, interval);
+      return obj;
+    }
+    
+    var newClearSetInterval = function(timer) {
+      for (var i in timer) {
+        clearTimeout(timer[i]);
+      }
+    }
     
     var defaults$1 = {
       mobile: false,
@@ -411,10 +565,246 @@
       }
     });
 
-    function TimeLine$1() {
+    var timeShaft = function(totalStep) {
+      var perWidth = Math.floor(100 / totalStep);
+      
+      var timeLineStyle = {
+        overflow: 'hidden',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        'z-index': 9999999,
+        width: '100%',
+        height: '20px',
+        background: 'rgba(0, 188, 212, 0.5)',
+        '-webkit-transition': 'all .4s ease-in-out',
+        transition: 'all .4s ease-in-out',
+      }
 
+      var timeLineInnerStyle =  {
+        position: 'relative',
+        top: 0,
+        left: 0,
+        width: 0,
+        height: '20px',
+        background: 'rgba(255, 67, 54, .7)',
+        '-webkit-transition': 'all .2s ease-in-out',
+        transition: 'all .2s ease-in-out',
+      }
+   
+      var lineStyle = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '20px',
+        'z-index': 9999,
+        'font-size': '10px',
+      }
+
+      var lineSpanStyle = {
+        'box-sizing': 'border',
+        display: 'inline-block',
+        height: '6px',
+        'border-right': '1px solid #fff',
+        color: '#fff',
+        'text-align': 'center',
+      }
+
+      var lineStepStyle = {
+        display: 'inline-block',
+        padding: '2px 5px',
+        cursor: 'pointer',
+      }
+    
+      var cells = Array(totalStep).fill(0).map((item, index) => (`
+        <span class="time-step-progress" style="width: ${perWidth}%; ${styleObjToString(lineSpanStyle)}">
+          <span class="time-step" key=${index + 1} style="${styleObjToString(lineStepStyle)}">${index + 1}</span>
+        </span>`))
+ 
+      var timeShaftTemplate = `
+        <div class="time-line" style="${styleObjToString(timeLineStyle)}">
+          <div class="time-line-inner" style="${styleObjToString(timeLineInnerStyle)}"></div>
+          <div class="line" style="${styleObjToString(lineStyle)}">
+            ${cells.join('')}
+          </div>
+        </div>
+      `;
+
+      document.body.style = 'background: #f2f2f2;';
+      document.getElementById('time').innerHTML = timeShaftTemplate;
+      // document.getElementById('css').innerHTML = '';
+
+      return {
+        init: function(step) {
+          var width = step === totalStep ? '100%' : perWidth * step + '%';
+          var ele = $('.time-line-inner');
+          ele.css({ width: width });
+        },
+        update: function() {},
+        position: function() {},
+      }
     }
 
+    function TimeLine$1() {
+      const nowTime = now();
+      var state = {
+        debug: true,
+        step: 0,
+
+        startTime: nowTime,
+        // endTime: nowTime + 60000,
+        endTime: nowTime + 10 * 1000,
+        currentTime: nowTime,
+        serverDiffTime: 0,
+      }
+
+      /**
+       * format action data
+       */
+      function formatActionData(data) {
+        var actions = {};
+        for (var key in data) {
+          var tmp = data[key];
+          if (isPlainObject(tmp)) {
+            for (var step in tmp) {
+              var stepValue = actions[step];
+              if (stepValue && stepValue.indexOf(key) === -1) {
+                stepValue.push(key);
+              } else if (!stepValue) {
+                stepValue = [key];
+              }
+              actions[step] = stepValue;
+            }
+          }
+        }
+
+        return actions;
+      }
+
+      /**
+       * actions register
+       */
+      function registerActions(actions) {
+        for (var key in actions) {
+          if (isFunction(actions[key])) {
+            registerAction([key, actions[key]], true);
+          }
+        }
+      }
+
+      console.log('Actions', Actions);
+
+      return {
+        asyncActions: function(ary, step) {
+          for (var i = 0; i < ary.length; i++) {
+            var actionKey = ary[i];
+            var keyValue = this.config.data[actionKey][step];
+            Actions[actionKey](keyValue);
+          }
+        },
+
+        newClearSetInterval: function() {
+          // newClearSetInterval(this.timer);
+          clearInterval(this.timer)
+          self.timer = null;
+        },
+
+        updateTime: function(callback) {
+          var me = this;
+
+          if (me.config.debug) {
+            me.timeShaft.init(me.config.step);
+          }
+
+          if (me.config.actions[me.config.step]) {
+            me.asyncActions(me.config.actions[me.config.step], me.config.step)
+          }
+
+          if (isFunction(callback)) {
+            callback();
+          }
+        },
+
+        createTimer: function() {
+          var me = this;
+          this.timer = setInterval(function() {
+            console.log('时间轴开始跑', me.config);
+            // defineProperty(me.config, 'currentTime', now())
+            defineProperty(me.config, 'step', me.config.step + 1)
+            
+            me.updateTime();
+
+            // 清除定时器的逻辑判断
+            if (me.config.step >= me.config.totalStep) {
+              console.log('---时间轴结束---');
+              me.newClearSetInterval(me.timer);
+              me.pubsub.emit('end');
+            }
+          }, 1000);
+        },
+
+        init: function() {
+          var me = this;
+
+          var params = cloneArray(arguments);
+          var actionData = formatActionData(params[0]);
+          registerActions(params[1])
+
+          this.config = _extends({}, state, {
+            data: params[0],
+            totalStep: (state.endTime - state.startTime) / 1000 || 1,
+            actions: actionData,
+          });
+
+          me.start();
+        },
+
+        start: function() {
+          var me = this;
+
+          if (this.config.debug) {
+            this.timeShaft = timeShaft(this.config.totalStep);
+            $('.time-step').bind('click', function() {
+              me.newClearSetInterval(me.timer); 
+              var key = Number($(this).attr('key'));
+              // defineProperty(me.config, 'currentTime', now())
+              defineProperty(me.config, 'step', key)
+
+              me.updateTime(me.createTimer.bind(me));
+            });
+          }
+
+          me.newClearSetInterval(me.timer);
+          me.createTimer();
+        },
+
+        pause: function() {
+          var me = this;
+          me.newClearSetInterval(me.timer);
+        },
+
+        stop: function() {
+          var me = this;
+          me.newClearSetInterval(me.timer);
+          defineProperty(me.config, 'step', 0)
+          me.updateTime(); 
+        },
+
+        play: function() {
+          var me = this;
+          me.createTimer();
+        },
+
+        end: function(callback) {
+          var me = this;
+          if (isFunction(callback)) {
+            me.pubsub = new PubSub();
+            me.pubsub.on('end', callback);
+          }
+        },
+      }
+    }
 
     var TimeLine$2 = TimeLine$1;
 

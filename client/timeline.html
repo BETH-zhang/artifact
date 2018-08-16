@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>TimeLine</title>
+  <style id="css">
+    .time-step:hover {
+      background: #ccc;
+    }
+    #time {
+      height: 20px;
+    }
+
+    .active {
+      background: aqua;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div id="time"></div>
+  <div id="app">
+    <button id="play" class="btn active">播放</button>
+    <button id="pause" class="btn">暂停</button>
+    <button id="stop" class="btn">停止</button>
+  </div>
+
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <script src="./js/music.js?t=5"></script>
+  <script src="./js/timeline-1.0.0-alpha.js"></script>
+  <script>
+    var timeline = TimeLine();
+    console.log(timeline)
+
+    timeline.init({
+      text: {
+        1: '第一条消息',
+        2: '第二条消息',
+        7: '第七条消息'
+      },
+      audio: {
+        2: '我是音乐',
+      },
+    }, {
+      text: function(val) { console.log('%c *** text ***:' + val, 'color: #2196F3') },
+      audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },
+    });
+
+    timeline.end(function() {
+      console.log('播放结束啦~~~~');
+      $('.btn').removeClass('active');
+    });
+
+    $('.btn').click(function() {
+      var id = $(this).attr('id');
+      $('.btn').removeClass('active');
+      $(this).addClass('active');
+
+      if (id === play) {
+
+      }
+      switch(id) {
+        case 'play':
+          timeline.play();
+          break;
+        case 'pause':
+          timeline.pause();
+          break;
+        case 'stop':
+          timeline.stop();
+          break;
+        default:
+          break;
+      }
+    });
+
+</script>
+</body>
+</html>
