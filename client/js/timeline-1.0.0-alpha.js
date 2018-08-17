@@ -498,10 +498,8 @@
     var newSetInterval = function(callback, interval) {
       var id = Math.random();
       var obj = {};
-      var index = 0;
       var timer = null;
       var timeoutTimer = function(callback, interval) {
-        index ++;
         timer = setTimeout(() => {
           isFunction(callback) && callback();
           timeoutTimer(callback, interval);
@@ -510,13 +508,18 @@
       }
     
       timeoutTimer(callback, interval);
+      // console.log('create-timer', obj); 
       return obj;
     }
     
     var newClearSetInterval = function(timer) {
-      for (var i in timer) {
-        clearTimeout(timer[i]);
-      }
+      // 加一个setTimeout执行异步操作，插入异步队列中，使执行顺序对齐
+      setTimeout(function(){
+        // console.log('delete-timer', timer);
+        for (var i in timer) {
+          clearTimeout(timer[i]);
+        }
+      }, 0);
     }
     
     var defaults$1 = {
@@ -665,7 +668,7 @@
         duration: 1000,
 
         startTime: nowTime,
-        endTime: nowTime + 60000,
+        endTime: nowTime + 10000,
         currentTime: nowTime,
         serverDiffTime: 0,
       }
@@ -729,7 +732,9 @@
 
         createTimer: function() {
           var me = this;
-          this.timer = setInterval(function() {
+         
+          me.newClearSetInterval(me.timer);
+          this.timer = newSetInterval(function() {
             console.log('时间轴开始跑', me.config);
             // defineProperty(me.config, 'currentTime', now())
             defineProperty(me.config, 'step', me.config.step + 1)
@@ -768,20 +773,25 @@
 
         pause: function() {
           var me = this;
-          defineProperty(me.config, 'status', 'pause')
           me.newClearSetInterval(me.timer);
+
+          defineProperty(me.config, 'status', 'pause')
         },
 
         stop: function() {
           var me = this;
           me.newClearSetInterval(me.timer);
+
           defineProperty(me.config, 'step', 0)
           defineProperty(me.config, 'status', 'stop')
+
           me.updateTime(); 
         },
 
         play: function() {
           var me = this;
+          me.newClearSetInterval(me.timer);
+
           if (me.config.status === 'end') {
             defineProperty(me.config, 'step', 0)
             me.updateTime(me.createTimer.bind(me));
@@ -814,9 +824,9 @@
         },
 
         newClearSetInterval: function() {
-          // newClearSetInterval(this.timer);
-          clearInterval(this.timer)
-          self.timer = null;
+          console.log('new-clear-setInterval')
+          newClearSetInterval(this.timer);
+          this.timer = null;
         },
 
         updateTime: function(callback) {
