@@ -138,7 +138,7 @@
     function classNames () {
       var classes = [];
 
-      for (var i = 0; i < arguments.length; i++) {
+      for (var i = arguments.length - 1; i >= 0; i--) {
           var arg = arguments[i];
           if (!arg) continue;
 
@@ -169,7 +169,7 @@
     function styleObjToString () {
       var styles = [];
 
-      for (var i = 0; i < arguments.length; i++) {
+      for (var i = arguments.length - 1; i >= 0; i--) {
           var arg = arguments[i];
           if (!arg) continue;
           var argType = typeof arg;
@@ -190,7 +190,7 @@
      * merge object
      */
     var _extends = Object.assign || function (target) {
-      for (var i = 1; i < arguments.length; i++) {
+      for (var i = arguments.length - 1; i >= 1; i--) {
           var source = arguments[i];
           for (var key in source) {
               if (Object.prototype.hasOwnProperty.call(source, key)) {
@@ -214,7 +214,7 @@
         return Array.prototype.slice.call(s);
       } catch (e) {
         var arr = [];
-        for (var i = 0; i < s.length; i++) {
+        for (var i = s.length - 1; i >= 0; i--) {
           // arr.push(s[i])
           arr[i] = s[i];
         }
@@ -248,6 +248,7 @@
     // Project
     // Constants
     var Actions = {};
+    window.TimeLineActions = {};
     /**
      * Used to register an action. This should never be called by users
      * directly, instead it should be called via an action: <br />
@@ -263,8 +264,10 @@
       } else if (Actions[name] && !propertyIsEnumerable(Actions, name)) {
         console.warn('TimeLineJS: Trying to override internal "registerAction" callback', name);
       } else if (internal === true) {
+        window.TimeLineActions[name] = callback;
         defineProperty$1(Actions, name, callback)
       } else {
+        window.TimeLineActions[name] = callback;
         Actions[name] = callback;
       }
     }
@@ -289,7 +292,8 @@
           var self = this;
           if (self.handlers[eventType]) {
             var handlerArgs = Array.prototype.slice.call(arguments,1);
-            for(var i = 0; i < self.handlers[eventType].length; i++) {
+            for(var i = self.handlers[eventType].length - 1; i >= 0; i--) {
+              console.log(i, self.handlers[eventType])
               self.handlers[eventType][i].apply(self,handlerArgs);
             }
           }
@@ -707,7 +711,33 @@
         }
       }
 
-      console.log('Actions', Actions);
+      var worker = null;
+
+      function startWorker() {
+        worker = new Worker('/client/js/workerScript.js');
+        // 接收从线程中传出的计算结果
+        worker.onmessage = function(event) {
+          console.log('worker-message', event.data);
+          // 消息文本放置再data属性中，可以是任何js对象
+          var params = JSON.parse(event.data);
+          if (!params.end) {
+            // console.log('worker线程返回的数据：', params, Actions);
+            Actions[params.actionKey](params.keyValue);
+          } else {
+            console.log(params.page + '~~~~结束');
+          }
+        }
+        //错误信息事件
+        worker.onerror = function(e){
+          console.log('error: ' + e.message);
+          //终止线程
+          worker.terminate();
+        };
+      }
+
+      function stopWorker() {
+        worker.terminate();
+      }
 
       return {
         init: function() {
@@ -724,10 +754,35 @@
             actions: actionData,
           });
 
-          if (me.config) {
-
-          }
           me.start();
+        },
+
+        start: function() {
+          var me = this;
+
+          startWorker();
+          console.log('worker', worker)
+          if (this.config.debug) {
+            this.timeShaft = timeShaft(this.config.totalStep);
+            $('.time-step').bind('click', function() {
+              me.newClearSetInterval(me.timer); 
+              var key = Number($(this).attr('key'));
+              defineProperty(me.config, 'step', key)
+
+              worker.terminate();
+              startWorker();
+              me.updateTime(me.createTimer.bind(me));
+            });
+          }
+
+          me.newClearSetInterval(me.timer);
+          me.createTimer();
+        },
+
+        newClearSetInterval: function() {
+          console.log('new-clear-setInterval')
+          newClearSetInterval(this.timer);
+          this.timer = null;
         },
 
         createTimer: function() {
@@ -746,52 +801,63 @@
             if (me.config.step >= me.config.totalStep) {
               console.log('---时间轴结束---');
               me.newClearSetInterval(me.timer);
-              me.pubsub.emit('end');
-              defineProperty(me.config, 'status', 'end')
+              me.timerEnd();
             }
           }, me.config.duration);
         },
 
-        start: function() {
+        timerEnd: function() {
+          var me = this;
+          me.pubsub.emit('end');
+          worker.terminate();
+          defineProperty(me.config, 'status', 'end')
+        },
+
+        updateTime: function(callback) {
           var me = this;
 
-          if (this.config.debug) {
-            this.timeShaft = timeShaft(this.config.totalStep);
-            $('.time-step').bind('click', function() {
-              me.newClearSetInterval(me.timer); 
-              var key = Number($(this).attr('key'));
-              // defineProperty(me.config, 'currentTime', now())
-              defineProperty(me.config, 'step', key)
-
-              me.updateTime(me.createTimer.bind(me));
-            });
+          if (me.config.debug) {
+            me.timeShaft.init(me.config.step);
           }
 
-          me.newClearSetInterval(me.timer);
-          me.createTimer();
+          if (me.config.actions[me.config.step]) {
+            me.asyncActions(me.config.actions[me.config.step], me.config.step, me.config.data)
+          }
+
+          if (isFunction(callback)) {
+            callback();
+          }
+        },
+
+        asyncActions: function(ary, step, data) {
+          worker.postMessage({ ary, step, data });
         },
 
         pause: function() {
           var me = this;
+          // stopWorker();
+          worker.terminate();
           me.newClearSetInterval(me.timer);
-
+          
           defineProperty(me.config, 'status', 'pause')
         },
 
         stop: function() {
           var me = this;
+          worker.terminate();
           me.newClearSetInterval(me.timer);
 
           defineProperty(me.config, 'step', 0)
           defineProperty(me.config, 'status', 'stop')
 
-          me.updateTime(); 
+          me.updateTime();
         },
 
         play: function() {
           var me = this;
           me.newClearSetInterval(me.timer);
 
+          startWorker();
           if (me.config.status === 'end') {
             defineProperty(me.config, 'step', 0)
             me.updateTime(me.createTimer.bind(me));
@@ -812,36 +878,6 @@
           var me = this;
           if (isFunction(callback)) {
             me.pubsub.on('end', callback);
-          }
-        },
-
-        asyncActions: function(ary, step) {
-          for (var i = 0; i < ary.length; i++) {
-            var actionKey = ary[i];
-            var keyValue = this.config.data[actionKey][step];
-            Actions[actionKey](keyValue);
-          }
-        },
-
-        newClearSetInterval: function() {
-          console.log('new-clear-setInterval')
-          newClearSetInterval(this.timer);
-          this.timer = null;
-        },
-
-        updateTime: function(callback) {
-          var me = this;
-
-          if (me.config.debug) {
-            me.timeShaft.init(me.config.step);
-          }
-
-          if (me.config.actions[me.config.step]) {
-            me.asyncActions(me.config.actions[me.config.step], me.config.step)
-          }
-
-          if (isFunction(callback)) {
-            callback();
           }
         },
 
