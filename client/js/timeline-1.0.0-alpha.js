@@ -570,7 +570,7 @@
     });
 
     var timeShaft = function(totalStep) {
-      var perWidth = Math.floor(window.innerWidth / totalStep);
+      var perWidth = window.innerWidth / totalStep;
       
       var timeLineStyle = {
         overflow: 'hidden',
@@ -609,12 +609,14 @@
       var lineSpanStyle = {
         'box-sizing': 'border',
         display: 'inline-block',
-        height: '6px',
+        height: '20px',
         'border-right': '1px solid #fff',
         color: '#fff',
         'text-align': 'center',
         float: 'left',
         'box-sizing': 'border-box',
+        overflow: 'hidden',
+        opacity: 0.2,
       }
 
       var lineStepStyle = {
@@ -624,7 +626,10 @@
       }
     
       var cells = Array(totalStep).fill(0).map((item, index) => (`
-        <span class="time-step-progress" style="width: ${perWidth}px; ${styleObjToString(lineSpanStyle)}">
+        <span class="time-step-progress" style="
+          width: ${window.innerWidth / totalStep}px;
+          ${styleObjToString(lineSpanStyle)};
+          border-right-width: ${ perWidth < 1 ? 0 : 1};">
           <span class="time-step" key=${index + 1} style="${styleObjToString(lineStepStyle)}">${index + 1}</span>
         </span>`))
  
@@ -657,10 +662,10 @@
       var state = {
         debug: true,
         step: 0,
+        duration: 1000,
 
         startTime: nowTime,
-        // endTime: nowTime + 60000,
-        endTime: nowTime + 10 * 1000,
+        endTime: nowTime + 60000,
         currentTime: nowTime,
         serverDiffTime: 0,
       }
@@ -702,34 +707,24 @@
       console.log('Actions', Actions);
 
       return {
-        asyncActions: function(ary, step) {
-          for (var i = 0; i < ary.length; i++) {
-            var actionKey = ary[i];
-            var keyValue = this.config.data[actionKey][step];
-            Actions[actionKey](keyValue);
-          }
-        },
-
-        newClearSetInterval: function() {
-          // newClearSetInterval(this.timer);
-          clearInterval(this.timer)
-          self.timer = null;
-        },
-
-        updateTime: function(callback) {
+        init: function() {
           var me = this;
+          me.pubsub = new PubSub();
 
-          if (me.config.debug) {
-            me.timeShaft.init(me.config.step);
-          }
+          var params = cloneArray(arguments);
+          var actionData = formatActionData(params[0].data);
+          var totalStep = (state.endTime - state.startTime) / (params[0].duration || state.duration) || 1
+          registerActions(params[1])
 
-          if (me.config.actions[me.config.step]) {
-            me.asyncActions(me.config.actions[me.config.step], me.config.step)
-          }
+          this.config = _extends({}, state, params[0], {
+            totalStep: totalStep,
+            actions: actionData,
+          });
 
-          if (isFunction(callback)) {
-            callback();
+          if (me.config) {
+
           }
+          me.start();
         },
 
         createTimer: function() {
@@ -749,23 +744,7 @@
               me.pubsub.emit('end');
               defineProperty(me.config, 'status', 'end')
             }
-          }, 1000);
-        },
-
-        init: function() {
-          var me = this;
-          me.pubsub = new PubSub();
-
-          var params = cloneArray(arguments);
-          var actionData = formatActionData(params[0].data);
-          registerActions(params[1])
-
-          this.config = _extends({}, state, params[0], {
-            totalStep: (state.endTime - state.startTime) / 1000 || 1,
-            actions: actionData,
-          });
-
-          me.start();
+          }, me.config.duration);
         },
 
         start: function() {
@@ -825,6 +804,37 @@
             me.pubsub.on('end', callback);
           }
         },
+
+        asyncActions: function(ary, step) {
+          for (var i = 0; i < ary.length; i++) {
+            var actionKey = ary[i];
+            var keyValue = this.config.data[actionKey][step];
+            Actions[actionKey](keyValue);
+          }
+        },
+
+        newClearSetInterval: function() {
+          // newClearSetInterval(this.timer);
+          clearInterval(this.timer)
+          self.timer = null;
+        },
+
+        updateTime: function(callback) {
+          var me = this;
+
+          if (me.config.debug) {
+            me.timeShaft.init(me.config.step);
+          }
+
+          if (me.config.actions[me.config.step]) {
+            me.asyncActions(me.config.actions[me.config.step], me.config.step)
+          }
+
+          if (isFunction(callback)) {
+            callback();
+          }
+        },
+
       }
     }
 
