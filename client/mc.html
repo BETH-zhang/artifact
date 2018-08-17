@@ -20,6 +20,7 @@
       <div id="peoQrcode"></div>
 
       <h2 class="title">参会列表</h2>
+      <button type="button" id="playback">查看回放</button>
       <div id="joinParticipant" class="join-list"></div>
 
       <h2 class="title currentNum"></h2>
@@ -114,6 +115,7 @@
   <script src="./js/constant.js"></script>
   <script src="./js/mc.js"></script>
   <script src="./js/music.js?t=5"></script>
+  <script src="./js/timeline-1.0.0-alpha.js"></script>
   <script>
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
@@ -442,6 +444,36 @@ if(window.WebSocket){
       initWs(ws);
     }
   }
+
+  function initTimeLine() {
+    var timeline = TimeLine();
+
+    timeline.init({
+      startTime: 0,
+      endTime: 0,
+      data: {
+        ppt: {
+          1: 'ppt第一页',
+          2: 'ppt第二页',
+        },
+        text: {
+          1: '第一条消息',
+          2: '第二条消息',
+          7: '第七条消息'
+        },
+        audio: {
+          2: '我是音乐',
+        },
+      }
+    }, {
+      text: function(val) { console.log('%c *** text ***:' + val, 'color: #2196F3') },
+      audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },
+    });
+  }
+
+  $('#playback').click(function() {
+    initTimeLine();
+  });
   </script>
 </body>
 </html>

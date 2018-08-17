@@ -276,18 +276,22 @@
       // 订阅事件
       on: function(eventType, handler){
           var self = this;
-          if(!(eventType in self.handlers)) {
+          if (handler) {
+            if(!(eventType in self.handlers)) {
               self.handlers[eventType] = [];
-          }
-          self.handlers[eventType].push(handler);
+            }
+            self.handlers[eventType].push(handler);
+          } 
           return this;
       },
         // 触发事件(发布事件)
       emit: function(eventType){
           var self = this;
-          var handlerArgs = Array.prototype.slice.call(arguments,1);
-          for(var i = 0; i < self.handlers[eventType].length; i++) {
-            self.handlers[eventType][i].apply(self,handlerArgs);
+          if (self.handlers[eventType]) {
+            var handlerArgs = Array.prototype.slice.call(arguments,1);
+            for(var i = 0; i < self.handlers[eventType].length; i++) {
+              self.handlers[eventType][i].apply(self,handlerArgs);
+            }
           }
           return self;
       },
@@ -566,7 +570,7 @@
     });
 
     var timeShaft = function(totalStep) {
-      var perWidth = Math.floor(100 / totalStep);
+      var perWidth = Math.floor(window.innerWidth / totalStep);
       
       var timeLineStyle = {
         overflow: 'hidden',
@@ -609,6 +613,8 @@
         'border-right': '1px solid #fff',
         color: '#fff',
         'text-align': 'center',
+        float: 'left',
+        'box-sizing': 'border-box',
       }
 
       var lineStepStyle = {
@@ -618,7 +624,7 @@
       }
     
       var cells = Array(totalStep).fill(0).map((item, index) => (`
-        <span class="time-step-progress" style="width: ${perWidth}%; ${styleObjToString(lineSpanStyle)}">
+        <span class="time-step-progress" style="width: ${perWidth}px; ${styleObjToString(lineSpanStyle)}">
           <span class="time-step" key=${index + 1} style="${styleObjToString(lineStepStyle)}">${index + 1}</span>
         </span>`))
  
@@ -632,12 +638,12 @@
       `;
 
       document.body.style = 'background: #f2f2f2;';
-      document.getElementById('time').innerHTML = timeShaftTemplate;
+      $('body').append(timeShaftTemplate);
       // document.getElementById('css').innerHTML = '';
 
       return {
         init: function(step) {
-          var width = step === totalStep ? '100%' : perWidth * step + '%';
+          var width = step === totalStep ? '100%' : perWidth * step + 'px';
           var ele = $('.time-line-inner');
           ele.css({ width: width });
         },
@@ -733,6 +739,7 @@
             // defineProperty(me.config, 'currentTime', now())
             defineProperty(me.config, 'step', me.config.step + 1)
             
+            me.pubsub.emit('progress', me.config.step);
             me.updateTime();
 
             // 清除定时器的逻辑判断
@@ -740,19 +747,20 @@
               console.log('---时间轴结束---');
               me.newClearSetInterval(me.timer);
               me.pubsub.emit('end');
+              defineProperty(me.config, 'status', 'end')
             }
           }, 1000);
         },
 
         init: function() {
           var me = this;
+          me.pubsub = new PubSub();
 
           var params = cloneArray(arguments);
-          var actionData = formatActionData(params[0]);
+          var actionData = formatActionData(params[0].data);
           registerActions(params[1])
 
-          this.config = _extends({}, state, {
-            data: params[0],
+          this.config = _extends({}, state, params[0], {
             totalStep: (state.endTime - state.startTime) / 1000 || 1,
             actions: actionData,
           });
@@ -781,6 +789,7 @@
 
         pause: function() {
           var me = this;
+          defineProperty(me.config, 'status', 'pause')
           me.newClearSetInterval(me.timer);
         },
 
@@ -788,18 +797,31 @@
           var me = this;
           me.newClearSetInterval(me.timer);
           defineProperty(me.config, 'step', 0)
+          defineProperty(me.config, 'status', 'stop')
           me.updateTime(); 
         },
 
         play: function() {
           var me = this;
-          me.createTimer();
+          if (me.config.status === 'end') {
+            defineProperty(me.config, 'step', 0)
+            me.updateTime(me.createTimer.bind(me));
+          } else {
+            me.createTimer();
+          }
+          defineProperty(me.config, 'status', 'play')
+        },
+
+        progress: function(callback) {
+          var me = this;
+          if (isFunction(callback)) {
+            me.pubsub.on('progress', callback);
+          }
         },
 
         end: function(callback) {
           var me = this;
           if (isFunction(callback)) {
-            me.pubsub = new PubSub();
             me.pubsub.on('end', callback);
           }
         },

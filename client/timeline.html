@@ -35,22 +35,28 @@
     console.log(timeline)
 
     timeline.init({
-      text: {
-        1: '第一条消息',
-        2: '第二条消息',
-        7: '第七条消息'
-      },
-      audio: {
-        2: '我是音乐',
-      },
+      data: {
+        text: {
+          1: '第一条消息',
+          2: '第二条消息',
+          7: '第七条消息'
+        },
+        audio: {
+          2: '我是音乐',
+        },
+      }
     }, {
       text: function(val) { console.log('%c *** text ***:' + val, 'color: #2196F3') },
       audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },
     });
 
     timeline.end(function() {
-      console.log('播放结束啦~~~~');
+      console.log('%c 播放结束啦~~~~', 'color: #9C27B0');
       $('.btn').removeClass('active');
+    })
+
+    timeline.progress(function(step) {
+      console.log('%c 当前进度：' + step, 'color: #CDDC39');
     });
 
     $('.btn').click(function() {
@@ -58,9 +64,6 @@
       $('.btn').removeClass('active');
       $(this).addClass('active');
 
-      if (id === play) {
-
-      }
       switch(id) {
         case 'play':
           timeline.play();
