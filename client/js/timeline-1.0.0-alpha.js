@@ -575,7 +575,7 @@
       })
       return {
         data: obj,
-        interval: [interval[0], interval[1] + 2000],
+        interval: [interval[0] - 2000, interval[1] + 2000],
       }
     }
 
@@ -866,6 +866,8 @@
             totalTime: totalTime,
             actions: actionData,
           });
+
+          console.log(this.config, '最终的config配置');
           registerActions(params[1])
 
           me.start();
