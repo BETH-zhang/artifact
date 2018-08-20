@@ -27,8 +27,9 @@
     <button id="stop" class="btn">停止</button>
   </div>
 
-  <!-- <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"></script> -->
-  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"></script>
+  <!-- <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script> -->
+  <!-- <script src="./js/jquery.dom.js"></script> -->
   <script src="./js/music.js?t=5"></script>
   <script src="./js/timeline-1.0.0-alpha.js"></script>
   <script>
@@ -37,20 +38,30 @@
 
     timeline.init({
       duration: 1000,
-      data: {
-        text: {
-          1: '第一条消息',
-          2: '第二条消息',
-          3: '第三条消息',
-          4: '第四条消息',
-          5: '第五条消息',
-          6: '第六条消息',
-          7: '第七条消息'
-        },
-        audio: {
-          2: '我是音乐',
-        },
-      }
+      speed: 'normal', // 'fast'
+      startTime: (new Date()).getTime(),
+      endTime: (new Date()).getTime() + 20000,
+      data: [{
+        eventType: 'ppt',
+        startTime: 3,
+        data: 'ppt第一页'
+      }, {
+        eventType: 'text',
+        startTime: 3,
+        data: '第一条消息',
+      }, {
+        eventType: 'text',
+        startTime: 4,
+        data: '第二条消息',
+      }, {
+        eventType: 'audio',
+        startTime: 5,
+        data: '我是音乐'
+      }, {
+        eventType: 'audio',
+        startTime: 12,
+        data: '我是音乐2'
+      }],
     }, {
       text: function(val) { console.log('%c *** text ***:' + val, 'color: #2196F3') },
       audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },

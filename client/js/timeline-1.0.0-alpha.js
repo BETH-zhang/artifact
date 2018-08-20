@@ -14,6 +14,13 @@
   * 5.如何处理时间差
   * 6.实现链式调用
   * 7.支持监听progress
+  * 8.数据为数组对象
+  * {
+  *   eventType: 'ppt',
+  *   startTime: (new Date()).getTime()
+  *   data: "{ title: '1' }"
+  * }
+  * 9.如何实现快放
   */
 
   (function(global, factory) {
@@ -235,6 +242,11 @@
         });
       }
     }
+
+    /**
+     * 引入query的dom元素操作
+     */
+    
 
     /**
      * Shim to get the current milliseconds - on anything except old IE it'll use
@@ -476,6 +488,82 @@
       }
     }
 
+    function getTimeString(t) {
+      var m = "";
+      if(t > 0){
+          if(t < 10){
+              m = "0" + t;
+          }else{
+              m = t + "";
+          }
+      }else{
+          m = "00";
+      }
+      return m;
+    }
+
+    function formatTime(timeStemp) {
+      if (!timeStemp || !isNumber(timeStemp) || timeStemp < 0) {
+        console.warn('错误的时间戳格式', timeStemp);
+      }
+
+      if(timeStemp < 60000){
+        return (timeStemp % 60000 ) / 1000 + "秒";
+      }else if((timeStemp >= 60000) && (timeStemp < 3600000)){
+          return getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
+      }else {
+          return getTimeString(timeStemp / 3600000) + ":" + getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
+      }
+    }
+
+    function sortBy(list, sortFunc) {
+      var ary = [];
+      ary =  list.sort(function(a,b){
+        return a.age()-b.age();
+      })
+
+      console.log(ary, sortFunc)
+    } 
+
+    /**
+     * 根据field字段将数组转换成对象
+     * @param {*} list 数组对象
+     * @param {*} field 设置字段key
+     * @param {*} sort 是否先进行排序
+     */
+    function arrayToObjectByField(list, field, sort) {
+      const data = sort ? sortBy(list, (item) => (item[sort])) : list
+      const obj = {}
+      let key = null
+      let objChild = {}
+      data.forEach((item, index) => {
+        const keyTmp = isFunction(field) ? field(item) : item[field]
+        if (data.length - 1 === index && keyTmp === key) {
+          objChild[item.startTime] = item.data;
+          obj[key] = objChild
+        } else if (!index) {
+          key = keyTmp
+          objChild[item.startTime] = item.data;
+          if (data.length - 1 === index) {
+            obj[key] = objChild
+          }
+        } else if (keyTmp !== key) {
+          // 保存上一份记录
+          obj[key] = objChild
+          objChild = {}
+          // 重新进行保存
+          objChild[item.startTime] = item.data;
+          key = keyTmp
+          if (data.length - 1 === index) {
+            obj[key] = objChild
+          }
+        } else {
+          objChild[item.startTime] = item.data;
+        }
+      })
+      return obj
+    }
+
     var newSetInterval = function(callback, interval) {
       var id = Math.random();
       var obj = {};
@@ -645,13 +733,29 @@
       const nowTime = now();
       var state = {
         debug: true,
-        step: 0,
+        auto: false,
         duration: 1000,
+        speed: 1000,
+        step: 0,
+        stepTmp: 0,
 
         startTime: nowTime,
         endTime: nowTime + 10000,
         currentTime: nowTime,
         serverDiffTime: 0,
+      }
+
+      var speedStatus = function(type) {
+        switch (type) {
+          case 'normal':
+            return 1000;
+          case 'fast':
+            return 200;
+          case 'slow':
+            return 2000;
+          default:
+            return 1000;
+        }
       }
 
       /**
@@ -691,15 +795,19 @@
       var worker = null;
 
       function startWorker() {
-        worker = new Worker('/client/js/workerScript.js');
+        worker = new Worker('/js/workerScript.js');
         // 接收从线程中传出的计算结果
         worker.onmessage = function(event) {
-          console.log('worker-message', event.data);
+          // console.log('worker-message', event.data);
           // 消息文本放置再data属性中，可以是任何js对象
           var params = JSON.parse(event.data);
           if (!params.end) {
             // console.log('worker线程返回的数据：', params, Actions);
-            Actions[params.actionKey](params.keyValue);
+            if (Actions[params.actionKey]) {
+              Actions[params.actionKey](params.keyValue); 
+            } else {
+              console.error(params.actionKey, '不存在对应的action函数') 
+            }
           } else {
             console.log(params.page + '~~~~结束');
           }
@@ -712,18 +820,23 @@
         };
       }
 
-      function stopWorker() {
-        worker.terminate();
-      }
-
       return {
         init: function() {
           var me = this;
           me.pubsub = new PubSub();
 
           var params = cloneArray(arguments);
+          if (!params[0]) {
+            return '没有完整的配置文件'
+          }
+
+          // 格式化回放数据
+          params[0].data = arrayToObjectByField(params[0].data, 'eventType');
           var actionData = formatActionData(params[0].data);
-          var totalStep = (state.endTime - state.startTime) / (params[0].duration || state.duration) || 1
+
+          var totalStep = (params[0].endTime - params[0].startTime) / 1000 || 1
+          // console.log(formatTime(params[0].endTime - params[0].startTime), '00000', totalStep)
+
           registerActions(params[1])
 
           this.config = _extends({}, state, params[0], {
@@ -738,17 +851,21 @@
           var me = this;
 
           startWorker();
-          console.log('worker', worker)
+          // console.log('worker', worker)
           if (this.config.debug) {
             this.timeShaft = timeShaft(this.config.totalStep);
             $('.time-step').bind('click', function() {
               me.newClearSetInterval(me.timer); 
               var key = Number($(this).attr('key'));
+              defineProperty(me.config, 'stepTmp', me.config.step)
               defineProperty(me.config, 'step', key)
 
               worker.terminate();
               startWorker();
-              me.updateTime(me.createTimer.bind(me));
+              me.updateTime(function() {
+                defineProperty(me.config, 'stepTmp', me.config.step) 
+                me.createTimer()
+              });
             });
           }
 
@@ -757,7 +874,7 @@
         },
 
         newClearSetInterval: function() {
-          console.log('new-clear-setInterval')
+          // console.log('new-clear-setInterval')
           newClearSetInterval(this.timer);
           this.timer = null;
         },
@@ -767,20 +884,19 @@
          
           me.newClearSetInterval(me.timer);
           this.timer = newSetInterval(function() {
-            console.log('时间轴开始跑', me.config);
-            // defineProperty(me.config, 'currentTime', now())
+            // console.log('时间轴开始跑', me.config);
             defineProperty(me.config, 'step', me.config.step + 1)
+            defineProperty(me.config, 'stepTmp', me.config.stepTmp + 1)
             
             me.pubsub.emit('progress', me.config.step);
             me.updateTime();
 
             // 清除定时器的逻辑判断
             if (me.config.step >= me.config.totalStep) {
-              console.log('---时间轴结束---');
               me.newClearSetInterval(me.timer);
               me.timerEnd();
             }
-          }, me.config.duration);
+          }, (speedStatus(me.config.speed)));
         },
 
         timerEnd: function() {
@@ -797,8 +913,17 @@
             me.timeShaft.init(me.config.step);
           }
 
-          if (me.config.actions[me.config.step]) {
-            me.asyncActions(me.config.actions[me.config.step], me.config.step, me.config.data)
+          var stepDiff = me.config.step - me.config.stepTmp;
+          if (stepDiff > 0) {
+            for (var i = me.config.stepTmp; i < me.config.step; i++) {
+              if (me.config.actions[i]) {
+                me.asyncActions(me.config.actions[i], i, me.config.data) 
+              }
+            }
+          } else {
+            if (me.config.actions[me.config.step]) {
+              me.asyncActions(me.config.actions[me.config.step], me.config.step, me.config.data)
+            }
           }
 
           if (isFunction(callback)) {
@@ -825,6 +950,7 @@
           me.newClearSetInterval(me.timer);
 
           defineProperty(me.config, 'step', 0)
+          defineProperty(me.config, 'stepTmp', 0)
           defineProperty(me.config, 'status', 'stop')
 
           me.updateTime();
@@ -837,6 +963,7 @@
           startWorker();
           if (me.config.status === 'end') {
             defineProperty(me.config, 'step', 0)
+            defineProperty(me.config, 'stepTmp', 0)
             me.updateTime(me.createTimer.bind(me));
           } else {
             me.createTimer();

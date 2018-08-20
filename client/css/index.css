@@ -143,8 +143,8 @@ body {
   flex: 1;
   margin-left: 20px;
   margin-right: 20px;
+  min-width: 400px;
 }
-
 
 .header {
   /* margin-bottom: 14px; */
