@@ -536,7 +536,18 @@
       const obj = {}
       let key = null
       let objChild = {}
+      var interval = [0, 0];
+
       data.forEach((item, index) => {
+        if (!interval[0]) {
+          interval[0] = item.startTime;
+          interval[1] = item.startTime;
+        } else if (item.startTime > interval[1]) {
+          interval[1] = item.startTime;
+        } else if (item.startTime < interval[0]) {
+          interval[0] = item.startTime;
+        }
+
         var timeStempKey = (item.startTime - startTime) / duration;
         const keyTmp = isFunction(field) ? field(item) : item[field]
         if (data.length - 1 === index && keyTmp === key) {
@@ -562,7 +573,10 @@
           objChild[timeStempKey] = item.data;
         }
       })
-      return obj
+      return {
+        data: obj,
+        interval: [interval[0], interval[1] + 2000],
+      }
     }
 
     var newSetInterval = function(callback, interval) {
@@ -832,18 +846,21 @@
           }
 
           this.config = _extends({}, state, params[0]);
-
+          defineProperty(this.config, 'sourceData', this.config.data)
+          var objByField = arrayToObjectByField(
+            this.config.data,
+            'eventType',
+            this.config.startTime,
+            this.config.duration,
+          );
+          defineProperty(this.config, 'data', objByField.data)
+          defineProperty(this.config, 'startTime', objByField.interval[0])
+          defineProperty(this.config, 'endTime', objByField.interval[1])
           var actionData = formatActionData(this.config.data);
           var totalStep = (this.config.endTime - this.config.startTime) / this.config.duration || 1;
           var totalTime = formatTime(this.config.endTime - this.config.startTime);
 
           this.config = _extends({}, this.config, {
-            data: arrayToObjectByField(
-              this.config.data,
-              'eventType',
-              this.config.startTime,
-              this.config.duration,
-            ),
             totalStep: totalStep,
             totalTime: totalTime,
             actions: actionData,
@@ -914,15 +931,15 @@
             /******** 更新内部当前进度 *******/
             defineProperty(me.config, 'stepTmp', me.config.stepTmp + 1)
             defineProperty(me.config, 'step', me.config.step + 1)
-           
+          
+            /******** 更新时间轴模板当前进度 *******/
+            me.updateTime();
+ 
             /******** 更新外部当前进度 *******/ 
             me.pubsub.emit('progress', JSON.stringify({
               currentTime: formatTime(me.config.step * me.config.duration),
               totalTime: me.config.totalTime,
             }));
-
-            /******** 更新时间轴模板当前进度 *******/
-            me.updateTime();
 
             // 清除定时器的逻辑判断
             if (me.config.step >= me.config.totalStep) {
