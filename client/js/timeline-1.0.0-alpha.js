@@ -541,7 +541,7 @@
         const keyTmp = isFunction(field) ? field(item) : item[field]
         if (data.length - 1 === index && keyTmp === key) {
           objChild[timeStempKey] = item.data;
-          obj[timeStempKey] = objChild
+          obj[key] = objChild
         } else if (!index) {
           key = keyTmp
           objChild[timeStempKey] = item.data;
@@ -840,13 +840,14 @@
           );
           var actionData = formatActionData(params[0].data);
 
-          var totalStep = (params[0].endTime - params[0].startTime) / 1000 || 1
-          console.log(formatTime(params[0].endTime - params[0].startTime), '00000', totalStep)
+          var totalStep = (params[0].endTime - params[0].startTime) / 1000 || 1;
+          var totalTime = formatTime(params[0].endTime - params[0].startTime);
 
           registerActions(params[1])
 
           this.config = _extends({}, state, params[0], {
             totalStep: totalStep,
+            totalTime: totalTime,
             actions: actionData,
           });
 
@@ -861,13 +862,22 @@
           if (this.config.debug) {
             this.timeShaft = timeShaft(this.config.totalStep);
             $('.time-step').bind('click', function() {
-              me.newClearSetInterval(me.timer); 
+              me.newClearSetInterval(me.timer);
+              worker.terminate();
+              startWorker();
+ 
               var key = Number($(this).attr('key'));
+              /******** 更新内部当前进度 *******/
               defineProperty(me.config, 'stepTmp', me.config.step)
               defineProperty(me.config, 'step', key)
 
-              worker.terminate();
-              startWorker();
+              /******** 更新外部当前进度 *******/ 
+              me.pubsub.emit('progress', JSON.stringify({
+                currentTime: formatTime(me.config.step * me.config.duration),
+                totalTime: me.config.totalTime,
+              }));
+             
+              /******** 更新时间轴模板当前进度 *******/ 
               me.updateTime(function() {
                 defineProperty(me.config, 'stepTmp', me.config.step) 
                 me.createTimer()
@@ -891,10 +901,17 @@
           me.newClearSetInterval(me.timer);
           this.timer = newSetInterval(function() {
             // console.log('时间轴开始跑', me.config);
-            defineProperty(me.config, 'step', me.config.step + 1)
+            /******** 更新内部当前进度 *******/
             defineProperty(me.config, 'stepTmp', me.config.stepTmp + 1)
-            
-            me.pubsub.emit('progress', me.config.step);
+            defineProperty(me.config, 'step', me.config.step + 1)
+           
+            /******** 更新外部当前进度 *******/ 
+            me.pubsub.emit('progress', JSON.stringify({
+              currentTime: formatTime(me.config.step * me.config.duration),
+              totalTime: me.config.totalTime,
+            }));
+
+            /******** 更新时间轴模板当前进度 *******/
             me.updateTime();
 
             // 清除定时器的逻辑判断

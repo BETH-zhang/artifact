@@ -25,6 +25,7 @@
     <button id="play" class="btn active">播放</button>
     <button id="pause" class="btn">暂停</button>
     <button id="stop" class="btn">停止</button>
+    <button id="currentTime">0秒</button><button id="totalTime">0秒</button>
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"></script>
@@ -73,8 +74,11 @@
       $('.btn').removeClass('active');
     })
 
-    timeline.progress(function(step) {
-      console.log('%c 当前进度：' + step, 'color: #CDDC39');
+    timeline.progress(function(data) {
+      var dataTmp = JSON.parse(data);
+      console.log('%c 当前进度：' + data, 'color: #CDDC39');
+      $('#currentTime').text(dataTmp.currentTime);
+      $('#totalTime').text(dataTmp.totalTime);
     });
 
     $('.btn').click(function() {
