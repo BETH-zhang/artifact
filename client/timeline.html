@@ -35,31 +35,32 @@
   <script>
     var timeline = TimeLine();
     console.log(timeline)
+    var timeStart = (new Date()).getTime();
 
     timeline.init({
       duration: 1000,
       speed: 'normal', // 'fast'
-      startTime: (new Date()).getTime(),
-      endTime: (new Date()).getTime() + 20000,
+      startTime: timeStart,
+      endTime: timeStart + 20000,
       data: [{
         eventType: 'ppt',
-        startTime: 3,
+        startTime: timeStart + 1000,
         data: 'ppt第一页'
       }, {
         eventType: 'text',
-        startTime: 3,
+        startTime: timeStart + 3000,
         data: '第一条消息',
       }, {
         eventType: 'text',
-        startTime: 4,
+        startTime: timeStart + 2000,
         data: '第二条消息',
       }, {
         eventType: 'audio',
-        startTime: 5,
+        startTime: timeStart + 5000,
         data: '我是音乐'
       }, {
         eventType: 'audio',
-        startTime: 12,
+        startTime: timeStart + 12000,
         data: '我是音乐2'
       }],
     }, {

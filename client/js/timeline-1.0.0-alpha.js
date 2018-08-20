@@ -531,19 +531,20 @@
      * @param {*} field 设置字段key
      * @param {*} sort 是否先进行排序
      */
-    function arrayToObjectByField(list, field, sort) {
+    function arrayToObjectByField(list, field, startTime, duration, sort) {
       const data = sort ? sortBy(list, (item) => (item[sort])) : list
       const obj = {}
       let key = null
       let objChild = {}
       data.forEach((item, index) => {
+        var timeStempKey = (item.startTime - startTime) / duration;
         const keyTmp = isFunction(field) ? field(item) : item[field]
         if (data.length - 1 === index && keyTmp === key) {
-          objChild[item.startTime] = item.data;
-          obj[key] = objChild
+          objChild[timeStempKey] = item.data;
+          obj[timeStempKey] = objChild
         } else if (!index) {
           key = keyTmp
-          objChild[item.startTime] = item.data;
+          objChild[timeStempKey] = item.data;
           if (data.length - 1 === index) {
             obj[key] = objChild
           }
@@ -552,13 +553,13 @@
           obj[key] = objChild
           objChild = {}
           // 重新进行保存
-          objChild[item.startTime] = item.data;
+          objChild[timeStempKey] = item.data;
           key = keyTmp
           if (data.length - 1 === index) {
             obj[key] = objChild
           }
         } else {
-          objChild[item.startTime] = item.data;
+          objChild[timeStempKey] = item.data;
         }
       })
       return obj
@@ -831,11 +832,16 @@
           }
 
           // 格式化回放数据
-          params[0].data = arrayToObjectByField(params[0].data, 'eventType');
+          params[0].data = arrayToObjectByField(
+            params[0].data,
+            'eventType',
+            params[0].startTime,
+            params[0].duration,
+          );
           var actionData = formatActionData(params[0].data);
 
           var totalStep = (params[0].endTime - params[0].startTime) / 1000 || 1
-          // console.log(formatTime(params[0].endTime - params[0].startTime), '00000', totalStep)
+          console.log(formatTime(params[0].endTime - params[0].startTime), '00000', totalStep)
 
           registerActions(params[1])
 
