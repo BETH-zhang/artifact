@@ -234,14 +234,15 @@ if (queryString.name) {
   openType = 2;
 }
 
-var logger = function(type, name, val, text) {
-  var startTime = (new Date()).getTime();
+var logger = function(type, name, val, text, startTime) {
+  var startTime = startTime || (new Date()).getTime();
   if (utils.isNumber(openType)) {
-    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, openText[openType] + val), startTime, text);
+    $('#mess').append(Component.Message(type !== 'MC' ? type : 7, name, openText[openType] + val, startTime, text));
   } else {
-    $mess.append(Component.Message(type !== 'MC' ? type : 7, name, val, startTime, text));
+    var html = Component.Message(type !== 'MC' ? type : 7, name, val, startTime, text);
+    $('#mess').append(html);
   }
-  $mess.animate({scrollTop: $('.message-' + startTime).offset() ? $('.message-' + startTime).offset().top : 0}, 1000);
+  $('#mess').animate({scrollTop: $('.message-' + startTime).offset() ? $('.message-' + startTime).offset().top : 0}, 1000);
 }
 
 var init = function(ws) {
@@ -457,30 +458,69 @@ if(window.WebSocket){
   function initTimeLine() {
     var timeline = TimeLine(); 
     console.log(playbackLog)
+    var timeStart = (new Date()).getTime();
     timeline.init({
-      startTime: 0,
-      endTime: 0,
       data: [{
         eventType: 'ppt',
-        startTime: 1,
-        data: 'ppt第一页'
+        startTime: timeStart + 1000,
+        data: {
+          page: 1,
+        }
       }, {
-        eventType: 'text',
-        startTime: 1,
-        data: '第一条消息',
+        eventType: 'ppt',
+        startTime: timeStart + 3000,
+        data: {
+          page: 2,
+        }
       }, {
-        eventType: 'text',
-        startTime: 2,
-        data: '第二条消息',
+        eventType: 'ppt',
+        startTime: timeStart + 5000,
+        data: {
+          page: 3,
+        }
+      }, {
+        eventType: 'message',
+        startTime: timeStart + 3000,
+        data: {
+          type: 'MC',
+          name: "MC",
+          value: "3",
+        },
+      }, {
+        eventType: 'message',
+        startTime: timeStart + 2000,
+        data: {
+          type: 'MC',
+          name: "MC111",
+          value: "2",
+        },
       }, {
         eventType: 'audio',
-        startTime: 2,
-        data: '我是音乐'
+        startTime: timeStart + 5000,
+        data: {
+          progress: 10,
+        }
+      }, {
+        eventType: 'audio',
+        startTime: timeStart + 12000,
+        data: {
+          pause: true,
+        }
       }],
     }, {
-      ppt: function(val) { console.log(val) },
-      text: function(val) { console.log('%c *** text ***:' + val, 'color: #2196F3') },
+      ppt: function(res) {
+        console.log('%c *** ppt ***:' + JSON.stringify(res), 'color: #cc0;', res.data.page)
+        updatePPT(res.data.page);
+      },
+      message: function(res) {
+        console.log('%c *** text ***:' + JSON.stringify(res), 'color: #2196F3')
+        logger(res.data.type, res.data.name, res.data.value, '', res.startTime);
+      },
       audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },
+    }, function() {
+      console.log('初始化页面状态');
+      $('#mess').html('');
+      updatePPT(0);
     });
 
     return timeline;

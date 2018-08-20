@@ -510,9 +510,9 @@
       if(timeStemp < 60000){
         return (timeStemp % 60000 ) / 1000 + "秒";
       }else if((timeStemp >= 60000) && (timeStemp < 3600000)){
-          return getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
+        return getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
       }else {
-          return getTimeString(timeStemp / 3600000) + ":" + getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
+        return getTimeString(timeStemp / 3600000) + ":" + getTimeString((timeStemp % 3600000) / 60000) + ":" + getTimeString((timeStemp % 60000 ) / 1000);
       }
     }
 
@@ -548,14 +548,14 @@
           interval[0] = item.startTime;
         }
 
-        var timeStempKey = (item.startTime - startTime) / duration;
+        var timeStempKey = Math.floor((item.startTime - startTime) / duration);
         const keyTmp = isFunction(field) ? field(item) : item[field]
         if (data.length - 1 === index && keyTmp === key) {
-          objChild[timeStempKey] = item.data;
+          objChild[timeStempKey] = item;
           obj[key] = objChild
         } else if (!index) {
           key = keyTmp
-          objChild[timeStempKey] = item.data;
+          objChild[timeStempKey] = item;
           if (data.length - 1 === index) {
             obj[key] = objChild
           }
@@ -564,13 +564,13 @@
           obj[key] = objChild
           objChild = {}
           // 重新进行保存
-          objChild[timeStempKey] = item.data;
+          objChild[timeStempKey] = item;
           key = keyTmp
           if (data.length - 1 === index) {
             obj[key] = objChild
           }
         } else {
-          objChild[timeStempKey] = item.data;
+          objChild[timeStempKey] = item;
         }
       })
       return {
@@ -729,9 +729,8 @@
         </div>
       `;
 
-      document.body.style = 'background: #f2f2f2;';
+      // document.body.style = 'background: #f2f2f2;';
       document.body.innerHTML += timeShaftTemplate;
-      // document.getElementById('css').innerHTML = '';
 
       return {
         init: function(step) {
@@ -856,8 +855,10 @@
           defineProperty(this.config, 'data', objByField.data)
           defineProperty(this.config, 'startTime', objByField.interval[0])
           defineProperty(this.config, 'endTime', objByField.interval[1])
+          this.initPage = params[2];
           var actionData = formatActionData(this.config.data);
-          var totalStep = (this.config.endTime - this.config.startTime) / this.config.duration || 1;
+
+          var totalStep = Math.floor((this.config.endTime - this.config.startTime) / this.config.duration || 1);
           var totalTime = formatTime(this.config.endTime - this.config.startTime);
 
           this.config = _extends({}, this.config, {
@@ -874,8 +875,12 @@
           var me = this;
 
           startWorker();
+          if (this.initPage) {
+            this.initPage()
+          }
           // console.log('worker', worker)
           if (this.config.debug) {
+            console.log(this.config.totalStep, 'this.config.totalStep')
             this.timeShaft = timeShaft(this.config.totalStep);
             var eles = document.querySelectorAll('.time-step');
             if (eles && eles.length) {
@@ -927,7 +932,7 @@
          
           me.newClearSetInterval(me.timer);
           this.timer = newSetInterval(function() {
-            console.log('时间轴开始跑', me.config);
+            // console.log('时间轴开始跑', me.config);
             /******** 更新内部当前进度 *******/
             defineProperty(me.config, 'stepTmp', me.config.stepTmp + 1)
             defineProperty(me.config, 'step', me.config.step + 1)
@@ -970,6 +975,15 @@
                 me.asyncActions(me.config.actions[i], i, me.config.data) 
               }
             }
+          } else if (stepDiff < 0) {
+            if (this.initPage) {
+              this.initPage()
+            }
+            for (var i = 0; i < me.config.step; i++) {
+              if (me.config.actions[i]) {
+                me.asyncActions(me.config.actions[i], i, me.config.data)
+              }
+            }
           } else {
             if (me.config.actions[me.config.step]) {
               me.asyncActions(me.config.actions[me.config.step], me.config.step, me.config.data)
@@ -1002,6 +1016,9 @@
           defineProperty(me.config, 'step', 0)
           defineProperty(me.config, 'stepTmp', 0)
           defineProperty(me.config, 'status', 'stop')
+          if (this.initPage) {
+            this.initPage()
+          }
 
           me.updateTime();
         },
