@@ -716,14 +716,14 @@
       `;
 
       document.body.style = 'background: #f2f2f2;';
-      $('body').append(timeShaftTemplate);
+      document.body.innerHTML += timeShaftTemplate;
       // document.getElementById('css').innerHTML = '';
 
       return {
         init: function(step) {
           var width = step === totalStep ? '100%' : perWidth * step + 'px';
-          var ele = $('.time-line-inner');
-          ele.css({ width: width });
+          var ele = document.querySelector('.time-line-inner')
+          ele.style.width = width;
         },
         update: function() {},
         position: function() {},
@@ -860,32 +860,43 @@
           // console.log('worker', worker)
           if (this.config.debug) {
             this.timeShaft = timeShaft(this.config.totalStep);
-            $('.time-step').bind('click', function() {
-              me.newClearSetInterval(me.timer);
-              worker.terminate();
-              startWorker();
- 
-              var key = Number($(this).attr('key'));
-              /******** 更新内部当前进度 *******/
-              defineProperty(me.config, 'stepTmp', me.config.step)
-              defineProperty(me.config, 'step', key)
-
-              /******** 更新外部当前进度 *******/ 
-              me.pubsub.emit('progress', JSON.stringify({
-                currentTime: formatTime(me.config.step * me.config.duration),
-                totalTime: me.config.totalTime,
-              }));
-             
-              /******** 更新时间轴模板当前进度 *******/ 
-              me.updateTime(function() {
-                defineProperty(me.config, 'stepTmp', me.config.step) 
-                me.createTimer()
-              });
-            });
+            var eles = document.querySelectorAll('.time-step');
+            if (eles && eles.length) {
+              eles.forEach(function(item, index) {
+                eles[index].onclick = function() {
+                  var key = this.getAttribute('key');
+                  me.handleClick(Number(key))
+                };
+              })
+            }
           }
 
           me.newClearSetInterval(me.timer);
           me.createTimer();
+        },
+
+        handleClick: function(key) {
+          var me = this;
+
+          me.newClearSetInterval(me.timer);
+          worker.terminate();
+          startWorker();
+
+          /******** 更新内部当前进度 *******/
+          defineProperty(me.config, 'stepTmp', me.config.step)
+          defineProperty(me.config, 'step', key)
+
+          /******** 更新外部当前进度 *******/ 
+          me.pubsub.emit('progress', JSON.stringify({
+            currentTime: formatTime(me.config.step * me.config.duration),
+            totalTime: me.config.totalTime,
+          }));
+         
+          /******** 更新时间轴模板当前进度 *******/ 
+          me.updateTime(function() {
+            defineProperty(me.config, 'stepTmp', me.config.step) 
+            me.createTimer()
+          });
         },
 
         newClearSetInterval: function() {
@@ -899,7 +910,7 @@
          
           me.newClearSetInterval(me.timer);
           this.timer = newSetInterval(function() {
-            // console.log('时间轴开始跑', me.config);
+            console.log('时间轴开始跑', me.config);
             /******** 更新内部当前进度 *******/
             defineProperty(me.config, 'stepTmp', me.config.stepTmp + 1)
             defineProperty(me.config, 'step', me.config.step + 1)
