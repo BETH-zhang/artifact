@@ -831,25 +831,24 @@
             return '没有完整的配置文件'
           }
 
-          // 格式化回放数据
-          params[0].data = arrayToObjectByField(
-            params[0].data,
-            'eventType',
-            params[0].startTime,
-            params[0].duration,
-          );
-          var actionData = formatActionData(params[0].data);
+          this.config = _extends({}, state, params[0]);
 
-          var totalStep = (params[0].endTime - params[0].startTime) / 1000 || 1;
-          var totalTime = formatTime(params[0].endTime - params[0].startTime);
+          var actionData = formatActionData(this.config.data);
+          var totalStep = (this.config.endTime - this.config.startTime) / this.config.duration || 1;
+          var totalTime = formatTime(this.config.endTime - this.config.startTime);
 
-          registerActions(params[1])
-
-          this.config = _extends({}, state, params[0], {
+          this.config = _extends({}, this.config, {
+            data: arrayToObjectByField(
+              this.config.data,
+              'eventType',
+              this.config.startTime,
+              this.config.duration,
+            ),
             totalStep: totalStep,
             totalTime: totalTime,
             actions: actionData,
           });
+          registerActions(params[1])
 
           me.start();
         },
