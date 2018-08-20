@@ -2,7 +2,7 @@
 > Artifact 是一款MC的直播工具，主要提供每周事业部分享的互动专区,同时收集新同事入职，部门汇报，个人分享等
 
 ### 截屏（Screenshots）
-![Screenshots](./screenshots/main.png)
+![Screenshots](./main.png)
 
 ### 功能点 (Feature)
 * 本周MC进入/mc.html 通过扫码进入MC主界面
