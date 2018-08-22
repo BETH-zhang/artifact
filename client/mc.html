@@ -560,7 +560,67 @@ if(window.WebSocket){
   var LivePPT = new LivePPT(
     document.getElementById('ppt-h5'),
     'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true',
+    'teacher',
   );
+
+  function noticePPT(res) {
+    // 通知拓课云课件
+    console.log('????', window.frames);
+    var iframe = window.frames[0];
+    // 传递消息
+    iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081');
+  }
+
+  function sendPPTEvent(slide) {
+    if (slide < 0) {
+      console.log('非法传入');
+      return null;
+    }
+    var tpEle = LivePPT.getIframeEle('ppt-h5', 'customController_totalSlideSpan');
+    var totalPage = LivePPT.matchNumber(tpEle.innerText)[0];
+    console.log(totalPage);
+    if (slide > totalPage - 1) {
+      console.log('非法传入');
+      return null;
+    }
+
+    var data = Object.assign({}, {
+      type: 'ppt',
+      name: queryString.name,
+    }, {
+      source: "tk_dynamicPPT",
+      data: {
+        action: 'slideChangeEvent',
+        externalData: {initiative: true},
+        slide: slide,
+        step: 0,
+        stepTotal: 1,
+      },
+    });
+
+    noticePPT(data);
+    ws.send(JSON.stringify({
+      roleType: 2,
+      data: data,
+    }));
+  }
+
+  LivePPT.addEvent(function(e) {
+    // 鼠标在iframe之外的区域打开才OK
+    switch(e.type) {
+      case 'keydown':
+        console.log('监听到键盘事件', e);
+        var ele = LivePPT.getIframeEle('ppt-h5', 'customController_skipSlide');
+        if (e.keyCode === 39) {
+          sendPPTEvent(Number(ele.value));
+        } else if (e.keyCode === 37) {
+          sendPPTEvent(Number(ele.value) - 2);
+        }
+        break;
+      default:
+        break;
+    }
+  });
 
   LivePPT.receiveEvent('http://172.16.15.185:8081', function(res) {
     console.log(res, typeof res);
@@ -572,6 +632,7 @@ if(window.WebSocket){
       }, res),
     }));
   });
+
   </script>
 </body>
 </html>
