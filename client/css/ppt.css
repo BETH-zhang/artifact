@@ -1,0 +1,19 @@
+.ppt {
+  position: relative;
+}
+
+.ppt-h5 {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  min-height: 200px;
+  border: 0;
+}
+
+@media screen and (min-width: 960px) {
+  .ppt-h5 {
+    min-height: 400px;
+  }
+}

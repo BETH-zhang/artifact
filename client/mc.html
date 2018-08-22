@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
   <link rel="stylesheet" href="./css/index.css">
   <link rel="stylesheet" href="./css/music.css">
+  <link rel="stylesheet" href="./css/ppt.css">
 </head>
 <body>
   <div class="header">
@@ -39,6 +40,15 @@
         <img class="ppt1" src="./images/live2.jpeg" />
         <img class="ppt2" src="./images/live3.jpeg" />
         <img class="ppt3" src="./images/live4.jpeg" />
+        <iframe
+          class="ppt-h5"
+          src="www.baidu.com"
+          id="ppt-h5"
+          allowFullScreen
+          frameBorder=0
+          allowTransparency
+          allow="camera;microphone;autoplay"
+        ></iframe>
       </div>
 
       <div class="share-lists">
@@ -113,9 +123,11 @@
   <script src="https://cdn.bootcss.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
-  <script src="./js/mc.js"></script>
   <script src="./js/music.js?t=5"></script>
   <script src="./js/timeline-1.0.0-alpha.js"></script>
+  <script src="./js/liveppt-1.0.0.js"></script>
+
+  <script src="./js/mc.js"></script>
   <script>
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
@@ -386,10 +398,11 @@ var initWs = function(ws) {
   $('.delete').bind('click', bindDelete);
 }
 
+var ws = null;
 if(window.WebSocket){
   initLocalData();
 
-    var ws = new WebSocket('ws://172.16.15.185:8001');
+    ws = new WebSocket('ws://172.16.15.185:8001');
     // var ws = new WebSocket('ws://192.168.1.106:8001');
     // var ws = new WebSocket('ws://10.0.0.11:8001');
     ws.onopen = function(e){
@@ -424,7 +437,7 @@ if(window.WebSocket){
 
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
-      console.log(res, 'res')
+      console.log(res, '--------- MC接收消息 --------')
       if (res.roleType === 1 && res.data.name) {
         window.location.href = document.location.origin + document.location.pathname
           + '?name=' + res.data.name;
@@ -455,7 +468,7 @@ if(window.WebSocket){
       } else {
         logger('MC', res.data.name, "~~连接成功");
       }
-      initWs(ws);
+      initWs(ws)
     }
   }
 
@@ -541,6 +554,23 @@ if(window.WebSocket){
 
   $('#playback').click(function() {
     initTimeLine();
+  });
+
+  // 初始化ppt内容
+  var LivePPT = new LivePPT(
+    document.getElementById('ppt-h5'),
+    'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true',
+  );
+
+  LivePPT.receiveEvent('http://172.16.15.185:8081', function(res) {
+    console.log(res, typeof res);
+    ws.send(JSON.stringify({
+      roleType: 2,
+      data: Object.assign({}, {
+        type: 'ppt',
+        name: queryString.name,
+      }, res),
+    }));
   });
   </script>
 </body>

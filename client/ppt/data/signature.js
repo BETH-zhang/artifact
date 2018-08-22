@@ -1,0 +1,1 @@
+window.doc_info = {"id":850926,"uid":"fFEtjA1j","logo":"","name":"Demo-Animals-20180423","external_bgm":null,"external_bgm_name":null,"external_bgm_volume":1.0,"stretch":"auto","transitionControl":"click","show_arrow":true,"auto_play":-1}

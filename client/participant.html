@@ -6,8 +6,9 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>参加人界面</title>
   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <!-- <link rel="stylesheet" href="./css/index.css"> -->
+  <link rel="stylesheet" href="./css/index.css">
   <!-- <link rel="stylesheet" href="./css/music.css"> -->
+  <link rel="stylesheet" href="./css/ppt.css">
 
   <style>
     /* 酷黑样式 */
@@ -164,6 +165,15 @@
       <img class="ppt1" src="./images/live2.jpeg" />
       <img class="ppt2" src="./images/live3.jpeg" />
       <img class="ppt3" src="./images/live4.jpeg" />
+      <iframe
+        class="ppt-h5"
+        src="www.baidu.com"
+        id="ppt-h5"
+        allowFullScreen
+        frameBorder=0
+        allowTransparency
+        allow="camera;microphone;autoplay"
+      ></iframe>
     </div>
 
     <div class="call-you">
@@ -211,8 +221,9 @@
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
   <script src="./js/mc.js"></script>
-  <!-- <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script> -->
+  <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script>
   <!-- <script src="./js/music.js?t=5"></script> -->
+  <script src="./js/liveppt-1.0.0.js"></script>
  
   <script>
     // var vConsole = new VConsole();
@@ -234,25 +245,27 @@ if (queryString.name) {
 var frist = false;
 var musicEle = $("#myAudio")[0];
 $('.apply-music').on('touchstart',function(){
-    if(musicEle.paused){
-        musicEle.play();
-    }else{
-        musicEle.pause();
-    }
     $('.apply-music').hide();
-    $('.call-you').show();
     frist = true;
 });
 
 $('.apply-music').on('click',function(){
-    if(musicEle.paused){
-        musicEle.play();
-    }else{
-        musicEle.pause();
-    }
     $('.apply-music').hide();
-    $('.call-you').show();
     frist = true;
+});
+
+function playMusic() {
+  if(musicEle.paused){
+    musicEle.play();
+    $('.call-you').show();
+  }else{
+    musicEle.pause();
+    $('.call-you').show();
+  }
+}
+
+$('.call-you').on('click', function() {
+  playMusic();
 });
 
 function updatePPT(index) {
@@ -264,6 +277,14 @@ function updatePPT(index) {
   // 处理当前
   $(`.btn-live${currentIndex}`).addClass('btn-active');
   $(`.ppt${currentIndex}`).show();
+}
+
+function noticePPT(res) {
+  // 通知拓课云课件
+  console.log('????', window.frames);
+  var iframe = window.frames[0];
+  // 传递消息
+  iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081');
 }
 
 var Component = {
@@ -407,6 +428,7 @@ if(window.WebSocket){
 
       if (queryString.name) {
         mainInit(ws);
+        $('.apply-music').show();
       } else if (!queryString.name) {
         init(ws);
       }
@@ -421,7 +443,7 @@ if(window.WebSocket){
 
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
-      console.log(res, 'res')
+      console.log(res, '--------- 参加者接收消息 --------')
       if (res.roleType === 3 && res.data.link && !queryString.name) {
         window.location.href = document.location.origin + document.location.pathname
           + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
@@ -429,11 +451,8 @@ if(window.WebSocket){
         logger("MC呼叫你~~~~");
         // bbMusic.init('auto');
         backgroundMusic(musicEle);
-        if (!frist) {
-          $('.apply-music').show();
-        } else {
-          $('.call-you').show()
-        }
+        // $('.call-you').show()
+        playMusic();
       } else if (res.roleType === 3 && res.data.peo) {
         logger(res.data.name + '加入~~~', res.data.role && `${currentRoleText(res.data.role)} ${res.data.title}`);
       } else if (res.roleType === 3 && res.data.type === 'call') {
@@ -444,14 +463,24 @@ if(window.WebSocket){
           musicEle.pause();
         } 
       } else if (res.roleType === 2 && res.data.type === 'ppt') {
-        logger(((res && (res.data.message || res.data.name)) || '')); 
-        updatePPT(res.data.page);
+        logger(((res && (res.data.message || res.data.name)) || ''));
+        if (res.data.page) {
+          updatePPT(res.data.page);
+        } else {
+          console.log('需要处理ppt课件');
+          noticePPT(res.data);
+        }
       } else {
         logger("~~连接成功" + ((res && (res.data.message || res.data.name)) || ''));
       }
     }
   }
 
+  // 初始化ppt内容
+  var LivePPT = new LivePPT(
+    document.getElementById('ppt-h5'),
+    'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
+  );
 
   </script>
 </body>
