@@ -103,7 +103,7 @@
     }
 
     var isPc = !isMobile();
-    if (!isPc) {
+    if (!isPc || !id) {
       mHtml();
     } else {
       pcHtml();

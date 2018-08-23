@@ -16,14 +16,15 @@
     周例会<span class="mc">本周MC</span><span id="weekMc"></span>
     <div class="other-opt">
       <a href="javascript:;" data-status="off" id="fullScreen">全屏</a>
+      <a href="javascript:;" id="callAll">呼叫全部</a>
       <a href="javascript:;" id="sendLove">送爱心</a>
       <a href="javascript:;" id="openPPT">打开PPT</a>
+      <a href="javascript:;" id="playback">生成回放</a>
     </div>
     <span class="time"></span>
   </div>
   <div class="layout flex">
     <div class="left">
-      <h2 class="title" id="playback">生成回放</h2>
       <h2 class="title">扫码进入</h2>
       <div id="peoQrcode"></div>
 
@@ -48,7 +49,7 @@
         <img class="ppt3" src="./images/live4.jpeg" />
         <iframe
           class="ppt-h5"
-          src="www.baidu.com"
+          src=""
           id="ppt-h5"
           allowFullScreen
           frameBorder=0
@@ -108,9 +109,12 @@
   <script src="./js/music.js?t=6"></script>
   <script src="./js/timeline-1.0.0-alpha.js"></script>
   <script src="./js/liveppt-1.0.0.js"></script>
+  <script src="./js/message.js?t=1"></script>
 
   <!-- <script src="./js/mc.js?sss=2"></script> -->
   <script>
+// 初始化
+var message = new Message(document.getElementById('mess'));
   
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
@@ -120,8 +124,6 @@ var $mainBtn = $('#mainBtn');
 var $weekMc = $('#weekMc');
 var $peoQrcode = $('#peoQrcode');
 var currentStep = -1;
-
-var playbackLog = [];
 
 function updatePPT(index) {
   if (index < 0) {
@@ -153,7 +155,7 @@ if (queryString.name) {
   $('#qrcode').qrcode({
     text: realPath,  //设置二维码内容
     render: "canvas",//设置渲染方式
-    background: "#ffc107",//背景颜色
+    background: "#f7d0de",//背景颜色
   });
   $('.mc-name').hide();
   $('#mcQrcode').modal({
@@ -161,28 +163,26 @@ if (queryString.name) {
   })
 }
 
-var openText = ['name', 'MC Connect', 'MC Start'];
-var openRole = [2, 1, 0];
-var openType = null;
+var roleType = null;
 if (queryString.name) {
   // mc链接成功
-  openType = queryString.name;
+  roleType = Constant.ROLE_TYPE.MC;
 } else if (queryString.mc) {
   // mc链接中
-  openType = 1;
+  roleType = Constant.ROLE_TYPE.MC_INPUT;
 } else {
   // mc界面
-  openType = 2;
+  roleType = Constant.ROLE_TYPE.MC_QRCODE;
 }
 
 var init = function(ws) {
   $mcInput.click(function() {
     if ($mcName.val()) {
       ws.send(JSON.stringify({
-        roleType: 1,
+        roleType: Constant.ROLE_TYPE.MC_INPUT,
         data: {
           mc: true,
-          name: $mcName.val(), 
+          name: $mcName.val(),
         }
       }));
     } else {
@@ -200,20 +200,8 @@ var mainInit = function(ws) {
     $('.time').html(new Date());
   }, 1000);
 
-  // 初始化按钮时间
-  $mainBtn.click(function() {
-    ws.send(JSON.stringify({
-      roleType: 2,
-      data: {
-        mc: true,
-        name: $mcName.val(),
-        message: '你好吗？'
-      },
-    }));
-  });
-
   // 初始化二维码
-  var realPath1 = document.location.origin + '/participant.html';
+  var realPath1 = document.location.origin + '/participant.html?mc=' + queryString.name;
   console.log(realPath1)
   $peoQrcode.qrcode({
     text: realPath1,  //设置二维码内容
@@ -223,7 +211,7 @@ var mainInit = function(ws) {
     background: "#3b3c40",//背景颜色
   });
 
-  initWs(ws);
+  resetBindEvent()
 
   // 初始化按钮事件
   $('.btn-live').click(function() {
@@ -234,10 +222,11 @@ var mainInit = function(ws) {
     var lives = localStorage.getItem('lives') && JSON.parse(localStorage.getItem('lives'));
     mainFuncs.joinLiveList(lives);
     ws.send(JSON.stringify({
-      roleType: 2,
+      name: queryString.name,
+      moduleType: Constant.MODULE_TYPE.OTHER,
+      connectType: Constant.CONNECT_TYPE.M2A,
       data: {
-        type: 'ppt',
-        name: queryString.name,
+        eventType: 'ppt',
         page: currentStep,
         message: `进入第${Number(currentStep) + 1}个环节： ${$(`.btn-live${currentStep}`).text()}`, 
       },
@@ -259,18 +248,31 @@ var mainInit = function(ws) {
       $(this).attr('data-status', 'on');
     }
   });
+  $('#callAll').click(function() {
+    ws.send(JSON.stringify({
+      name: queryString.name,
+      moduleType: Constant.MODULE_TYPE.OTHER,
+      connectType: Constant.CONNECT_TYPE.M2A,
+      from: 'mc',
+      data: {
+        eventType: 'call',
+        message: '呼叫所有人', 
+      },
+    }));
+  });
 }
 
 function bindDelete() {
   var name = $(this).attr('data-name');
   ws.send(JSON.stringify({
-    roleType: 2,
+    name: queryString.name,
+    moduleType: Constant.MODULE_TYPE.OTHER,
+    connectType: Constant.CONNECT_TYPE.M2A,
     data: {
-      type: 'delete',
-      mc: true,
-      name,
+      eventType: 'delete',
+      name: name,
       message: '删除' + name
-    }
+    },
   }));
   $(`.avatar-${name}`).remove();
   var list = localStorage.getItem('peos') && JSON.parse(localStorage.getItem('peos'));
@@ -282,53 +284,86 @@ function bindDelete() {
 function bindCall() {
   var name = $(this).attr('data-name');
   ws.send(JSON.stringify({
-    roleType: 2,
+    name: queryString.name,
+    moduleType: Constant.MODULE_TYPE.OTHER,
+    connectType: Constant.CONNECT_TYPE.M2P,
+    from: 'mc',
+    to: name,
     data: {
-      type: 'call',
-      mc: true,
-      name,
+      eventType: 'call',
       message: '呼叫' + name
     },
   }));
 }
 
-var currentRoleText = function(role) {
-  var text = {
-    'option0': '我是新人',
-    'option1': '工作汇报',
-    'option2': '我要分享',
-    'option3': '老板分享',
-  };
-  return text[role] || '我是游客'
-};
-
-var initWs = function(ws) {
+var resetBindEvent = function() {
   $('.call').unbind('click', bindCall);
   $('.delete').unbind('click', bindDelete);
   $('.call').bind('click', bindCall);
   $('.delete').bind('click', bindDelete);
 }
 
+var receiveOtherMsg = function(res) {
+  if (res.data.eventType === 'call') {
+    var peos = localStorage.getItem('peos');
+    var index = peos.indexOf(res.data.name);
+  } else if (res.data.eventType === 'delete') {
+    mainFuncs.joinLiveList(res.data.lives);
+    localStorage.setItem('peos', JSON.stringify(res.data.peos))
+    localStorage.setItem('lives', JSON.stringify(res.data.lives));
+  }
+}
+
+var receiveConnect = function(res) {
+  if (res.roleType === Constant.ROLE_TYPE.MC_INPUT && res.data.name) {
+    window.location.href = document.location.origin + document.location.pathname
+      + '?name=' + res.data.name;
+  } else if (res.roleType === Constant.ROLE_TYPE.PERSON) {
+    mainFuncs.joinParticipant(res.data);
+    mainFuncs.joinLiveList(res.data.lives);
+    localStorage.setItem('peos', JSON.stringify(res.data.peos))
+    localStorage.setItem('lives', JSON.stringify(res.data.lives))
+    var currentData = res.data.lives[res.name] || res.data;
+
+    message.push(res.name, res.name + '加入~~~', currentData.role && `${Constant.ROLE_STATUS[currentData.role]} ${currentData.title}`);
+  }
+  message.push(res.name, '~' + (res.data.message || '连接成功')); 
+}
+
+var receiveMessage = function(res) {
+  switch(res.moduleType) {
+    case Constant.MODULE_TYPE.PPT:
+      break;
+    case Constant.MODULE_TYPE.MESSAGE:
+      break;
+    case Constant.MODULE_TYPE.MEDIA:
+      break;
+    case Constant.MODULE_TYPE.CANVAS:
+      break;
+    case Constant.MODULE_TYPE.OTHER:
+      receiveOtherMsg(res);
+      break;
+    default:
+      break;
+  }
+
+  message.push(res.name, '~' + (res.data.message || '连接成功'));
+}
+
 var ws = null;
 if(window.WebSocket){
   initLocalData();
 
-  ws = new WebSocket('ws://172.16.15.185:8001');
+  // ws = new WebSocket('ws://172.16.15.185:8001');
   // var ws = new WebSocket('ws://192.168.1.106:8001');
-  // var ws = new WebSocket('ws://10.0.0.11:8001');
+  var ws = new WebSocket('ws://10.0.0.13:8001');
   ws.onopen = function(e){
     console.log("连接服务器成功");
-    var role = null;
-    if (utils.isNumber(openType)) {
-      role = openRole[openType];
-    } else {
-      role = 2;
-    }
     ws.send(JSON.stringify({
-      roleType: role,
+      roleType: roleType,
+      name: queryString.name,
       data: {
         mc: queryString.mc,
-        name: queryString.name
       },
     }));
 
@@ -340,215 +375,26 @@ if(window.WebSocket){
   }
   
   ws.onclose = function(e){
-    logger('MC', "MC", "~~服务器关闭");
+    message.push("MC", "~~服务器关闭");
   }
   ws.onerror = function(){
-    logger('MC', "MC", "~~连接出错");
+    message.push("MC", "~~连接出错");
   }
 
   ws.onmessage = function(e){
     var res = JSON.parse(e.data) || {};
     console.log(res, '--------- MC接收消息 --------')
-    if (res.roleType === 1 && res.data.name) {
-      window.location.href = document.location.origin + document.location.pathname
-        + '?name=' + res.data.name;
-    } else if (res.roleType === 3 && res.data.peos) {
-      mainFuncs.joinParticipant(res.data);
-      mainFuncs.joinLiveList(res.data.lives);
-      localStorage.setItem('peos', JSON.stringify(res.data.peos))
-      localStorage.setItem('lives', JSON.stringify(res.data.lives))
-      var index = res.data.peos.indexOf(res.data.currentPeo);
-      var currentData = res.data.lives[res.data.currentPeo];
-
-      playbackLog.push({
-        eventType: 'joinLive',
-        startTime: (new Date()).getTime(),
-        data: res.data,
-      })
-
-      logger(index, res.data.currentPeo, res.data.currentPeo + '加入~~~', currentData.role && `${currentRoleText(currentData.role)} ${currentData.title}`);
-    } else if (res.roleType === 3 && (
-      res.data.type === 'call' || res.data.type === 'message'
-    )) {
-      var peos = localStorage.getItem('peos');
-      var index = peos.indexOf(res.data.name);
-      logger(index, res.data.name, res.data.message); 
-    } else if (res.roleType === 2 && res.data.message) {
-      mainFuncs.joinLiveList(res.data.lives);
-      logger('MC', queryString.name, (res.data && res.data.message));
-      localStorage.setItem('peos', JSON.stringify(res.data.peos))
-      localStorage.setItem('lives', JSON.stringify(res.data.lives));
+    if (res.roleType && !res.connectType) {
+      receiveConnect(res);
     } else {
-      logger('MC', res.data.name, "~~连接成功");
+      receiveMessage(res)
     }
-    initWs(ws)
+    
+    resetBindEvent()
   }
 }
 
-function initTimeLine() {
-  var timeline = TimeLine(); 
-  console.log(playbackLog)
-  var timeStart = (new Date()).getTime();
-  var data = playbackLog.concat([{
-      eventType: 'ppt',
-      startTime: timeStart + 1000,
-      data: {
-        page: 1,
-      }
-    }, {
-      eventType: 'ppt',
-      startTime: timeStart + 3000,
-      data: {
-        page: 2,
-      }
-    }, {
-      eventType: 'ppt',
-      startTime: timeStart + 5000,
-      data: {
-        page: 3,
-      }
-    }, {
-      eventType: 'message',
-      startTime: timeStart + 3000,
-      data: {
-        type: 'MC',
-        name: "MC",
-        value: "3",
-      },
-    }, {
-      eventType: 'message',
-      startTime: timeStart + 2000,
-      data: {
-        type: 'MC',
-        name: "MC111",
-        value: "2",
-      },
-    }, {
-      eventType: 'audio',
-      startTime: timeStart + 5000,
-      data: {
-        progress: 10,
-      }
-    }, {
-      eventType: 'audio',
-      startTime: timeStart + 12000,
-      data: {
-        pause: true,
-      }
-    }]);
 
-  console.log(data, '???')
-
-  timeline.init({
-    data: data,
-  }, {
-    joinLive: function(res) {
-      console.log('%c *** ppt ***:' + JSON.stringify(res), 'color: #c00;', res.data.page) 
-      mainFuncs.joinParticipant(res.data); 
-    },
-    ppt: function(res) {
-      console.log('%c *** ppt ***:' + JSON.stringify(res), 'color: #cc0;', res.data.page)
-      updatePPT(res.data.page);
-    },
-    message: function(res) {
-      console.log('%c *** text ***:' + JSON.stringify(res), 'color: #2196F3')
-      logger(res.data.type, res.data.name, res.data.value, '', res.startTime);
-    },
-    audio: function(val) { console.log('%c *** audio ***:' + val, 'color: #009688') },
-  }, function() {
-    console.log('初始化页面状态');
-    $('#mess').html('');
-    $('#joinParticipant').html('');
-    updatePPT(-1);
-  });
-
-  return timeline;
-}
-
-$('#playback').click(function() {
-  initTimeLine();
-});
-
-function initPPT() {
-
-  // 初始化ppt内容
-  var LivePPT = new LivePPT(
-    document.getElementById('ppt-h5'),
-    'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true',
-    'teacher',
-  );
-
-  function noticePPT(res) {
-    // 通知拓课云课件
-    console.log('????', window.frames);
-    var iframe = window.frames[0];
-    // 传递消息
-    iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081');
-  }
-
-  function sendPPTEvent(slide) {
-    if (slide < 0) {
-      console.log('非法传入');
-      return null;
-    }
-    var tpEle = LivePPT.getIframeEle('ppt-h5', 'customController_totalSlideSpan');
-    var totalPage = LivePPT.matchNumber(tpEle.innerText)[0];
-    console.log(totalPage);
-    if (slide > totalPage - 1) {
-      console.log('非法传入');
-      return null;
-    }
-
-    var data = Object.assign({}, {
-      type: 'ppt',
-      name: queryString.name,
-    }, {
-      source: "tk_dynamicPPT",
-      data: {
-        action: 'slideChangeEvent',
-        externalData: {initiative: true},
-        slide: slide,
-        step: 0,
-        stepTotal: 1,
-      },
-    });
-
-    noticePPT(data);
-    ws.send(JSON.stringify({
-      roleType: 2,
-      data: data,
-    }));
-  }
-
-  LivePPT.addEvent(function(e) {
-    // 鼠标在iframe之外的区域打开才OK
-    switch(e.type) {
-      case 'keydown':
-        console.log('监听到键盘事件', e);
-        var ele = LivePPT.getIframeEle('ppt-h5', 'customController_skipSlide');
-        if (e.keyCode === 39) {
-          sendPPTEvent(Number(ele.value));
-        } else if (e.keyCode === 37) {
-          sendPPTEvent(Number(ele.value) - 2);
-        }
-        break;
-      default:
-        break;
-    }
-  });
-
-  LivePPT.receiveEvent('http://172.16.15.185:8081', function(res) {
-    console.log(res, typeof res);
-    ws.send(JSON.stringify({
-      roleType: 2,
-      data: Object.assign({}, {
-        type: 'ppt',
-        name: queryString.name,
-      }, res),
-    }));
-  });
-  
-}
   </script>
 </body>
 </html>

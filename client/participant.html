@@ -20,19 +20,19 @@
     <br />
     <div class="mc-role">
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio0" value="option-1">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio0" value="option0">
         <label class="form-check-label" for="inlineRadio0">我是游客</label>
       </div>
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option0">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">
         <label class="form-check-label" for="inlineRadio1">我是新人</label>
       </div>
       <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option1">
+          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">
           <label class="form-check-label" for="inlineRadio2">工作汇报</label>
         </div>
       <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option2">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option3">
         <label class="form-check-label" for="inlineRadio3">我要分享</label>
       </div>
     </div>
@@ -56,7 +56,7 @@
       <img class="ppt3" src="./images/live4.jpeg" />
       <iframe
         class="ppt-h5"
-        src="www.baidu.com"
+        src=""
         id="ppt-h5"
         allowFullScreen
         frameBorder=0
@@ -81,14 +81,18 @@
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
-  <script src="./js/mc.js"></script>
-  <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script>
   <script src="./js/music.js?t=6"></script>
+  <!-- <script src="./js/timeline-1.0.0-alpha.js"></script> -->
   <script src="./js/liveppt-1.0.0.js"></script>
+  <script src="./js/message.js?t=1"></script>
  
   <script>
+// 初始化
+var message = new Message(document.getElementById('mess'));
+
     // var vConsole = new VConsole();
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
@@ -98,7 +102,7 @@ var $replayYou = $('#replay-you');
 
 var queryString = utils.queryString();
 if (queryString.name) {
-  var bbMusic = new BBMusic('music');
+  var bbMusic = new BBMusic();
   bbMusic.init();
   $main.show();
   $('.model').hide();
@@ -118,22 +122,7 @@ function updatePPT(index) {
   $(`.ppt${currentIndex}`).show();
 }
 
-function noticePPT(res) {
-  // 通知拓课云课件
-  console.log('????', window.frames);
-  var iframe = window.frames[0];
-  // 传递消息
-  iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081');
-}
-
 var Component = {
-  Message: function(type, name, message, startTime) {
-    var className = Constant.classNames[type === 7 ? 7 : type % 7];
-    return `<div class="message-item message-${startTime}">
-      <div class="avatar border ${className}">${name}</div>
-      <div class="msg">${message}</div>
-    </div>`;
-  },
   LiveIndex: function(name, index, role, title) {
     var className = Constant.classNames[1];
     var value = '新人';
@@ -157,10 +146,6 @@ var Component = {
   }
 }
 
-var logger = function(val, text) {
-  $('#mess').prepend(`<p><span class="rotate"></span>${val}${text ? `<span class="active">${text}</span>` : ''}</p>`);
-}
-
 var init = function(ws) {
   var formCheckInput = null;
 
@@ -171,11 +156,10 @@ var init = function(ws) {
   $mcInput.click(function() {
     if ($mcName.val()) {
       ws.send(JSON.stringify({
-        roleType: 3,
+        roleType: Constant.ROLE_TYPE.PERSON,
         data: {
-          peo: true,
           name: $mcName.val(),
-          link: true, // 特殊标识
+          join: true, // 特殊标识
           role: formCheckInput,
           title: $('.share-title').val(),
         }
@@ -205,11 +189,14 @@ var mainInit = function(ws) {
 
   $replayYou.click(function() {
     ws.send(JSON.stringify({
-      roleType: 3,
+      connectType: Constant.CONNECT_TYPE.P2P,
+      moduleType: Constant.MODULE_TYPE.OTHER,
+      name: queryString.name,
+      from: queryString.name,
+      to: 'mc',
       data: {
-        type: 'call',
-        name: queryString.name,
-        message: '我在我在'
+        eventType: 'call',
+        message: '回复~我在我在'
       },
     }));
   });
@@ -218,10 +205,11 @@ var mainInit = function(ws) {
     var msg = $('#inputMessage').val();
     if (msg) {
       ws.send(JSON.stringify({
-        roleType: 3,
+        connectType: Constant.CONNECT_TYPE.P2P,
+        moduleType: Constant.MODULE_TYPE.MESSAGE,
+        name: queryString.name,
         data: {
-          type: 'message',
-          name: queryString.name,
+          eventType: 'message',
           message: msg,
         },
       }));
@@ -229,17 +217,70 @@ var mainInit = function(ws) {
   });
 }
 
+var receivePptMsg = function(res) {
+  var iframe = window.frames[0];
+  // 传递消息
+  iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081'); 
+}
+
+var receiveOtherMsg = function(res) {
+  console.log(res, '????');
+  if (res.data.eventType === 'call' && res.from === 'mc') {
+    bbMusic.changeMusic('./data/call.mp3');
+    $('.call-you').show()
+  } else if (res.data.eventType === 'call' && res.to === 'mc') {
+    bbMusic.initMusic();
+    $('.call-you').hide();
+  } else if (res.data.eventType === 'ppt' && res.data.page) {
+    updatePPT(res.data.page);
+  }
+}
+
+var receiveConnect = function(res) {
+  var msg = '~' + (res.data.message || '连接成功')
+  if (res.roleType === Constant.ROLE_TYPE.PERSON && res.data.name && res.data.join) {
+    window.location.href = document.location.origin + document.location.pathname
+      + '?name=' + res.data.name;
+  } else if (res.data.name) {
+    msg = `~${res.name}:加入~~~`;
+  }
+
+  message.push(res.name, msg, true);
+}
+
+var receiveMessage = function(res) {
+  switch(res.moduleType) {
+    case Constant.MODULE_TYPE.PPT:
+      receivePptMsg(res);
+      break;
+    case Constant.MODULE_TYPE.MESSAGE:
+      break;
+    case Constant.MODULE_TYPE.MEDIA:
+      break;
+    case Constant.MODULE_TYPE.CANVAS:
+      break;
+    case Constant.MODULE_TYPE.OTHER:
+      receiveOtherMsg(res);
+      break;
+    default:
+      break;
+  }
+
+  console.log(message)
+  message.push(res.name, '~' + (res.data.message || '连接成功'), true);
+}
+
 if(window.WebSocket){
-    var ws = new WebSocket('ws://172.16.15.185:8001');
+    // var ws = new WebSocket('ws://172.16.15.185:8001');
     // var ws = new WebSocket('ws://192.168.1.106:8001');
-    // var ws = new WebSocket('ws://10.0.0.11:8001');
+    var ws = new WebSocket('ws://10.0.0.13:8001');
     ws.onopen = function(e){
       console.log("连接服务器成功");
 
       ws.send(JSON.stringify({
-        roleType: 3,
+        roleType: Constant.ROLE_TYPE.PERSON,
+        name: queryString.name,
         data: {
-          peo: true,
           name: queryString.name,
           role: queryString.role,
           title: queryString.title,
@@ -254,51 +295,30 @@ if(window.WebSocket){
     }
     
     ws.onclose = function(e){
-      logger("~~服务器关闭");
+      message.push('person', "~~服务器关闭", true);
     }
     ws.onerror = function(){
-      logger("~~连接出错");
+      message.push('person', "~~连接出错", true);
     }
 
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
       console.log(res, '--------- 参加者接收消息 --------')
-      if (res.roleType === 3 && res.data.link && !queryString.name) {
-        window.location.href = document.location.origin + document.location.pathname
-          + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
-      } else if (res.roleType === 2 && res.data.type === 'call') {
-        logger("MC呼叫你~~~~");
-        bbMusic.changeMusic('./data/call.mp3');
-        $('.call-you').show()
-      } else if (res.roleType === 3 && res.data.peo) {
-        logger(res.data.name + '加入~~~', res.data.role && `${currentRoleText(res.data.role)} ${res.data.title}`);
-      } else if (res.roleType === 3 && res.data.type === 'call') {
-        logger(((res && (res.data.message || res.data.name)) || ''));
-        bbMusic.initMusic();
-        $('.call-you').hide();
-        if(!musicEle.paused){
-          musicEle.pause();
-        } 
-      } else if (res.roleType === 2 && res.data.type === 'ppt') {
-        logger(((res && (res.data.message || res.data.name)) || ''));
-        if (res.data.page) {
-          updatePPT(res.data.page);
-        } else {
-          console.log('需要处理ppt课件');
-          noticePPT(res.data);
-        }
+      if (res.roleType && !res.connectType) {
+        receiveConnect(res);
       } else {
-        logger("~~连接成功" + ((res && (res.data.message || res.data.name)) || ''));
+        receiveMessage(res)
       }
     }
   }
 
-  // 初始化ppt内容
-  var LivePPT = new LivePPT(
-    document.getElementById('ppt-h5'),
-    'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
-    'student',
-  );
+  // // 初始化ppt内容
+  // var LivePPT = new LivePPT(
+  //   document.getElementById('ppt-h5'),
+  //   'http://10.0.0.13:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
+  //   // 'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
+  //   'student',
+  // );
 
   </script>
 </body>

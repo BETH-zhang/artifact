@@ -12,6 +12,22 @@ var lives = {
   },
 };
 
+var Constant = {
+  ROLE_TYPE: {
+    MC_QRCODE: 'mc-qrcode',
+    MC_INPUT: 'mc-input',
+    MC: 'mc',
+    PERSON: 'person',
+  },
+  CONNECT_TYPE: {
+    'M2P': 'mc-to-person',
+    'M2A': 'mc-to-all-person',
+    'M2S': 'mc-to-server',
+    'P2M': 'person-to-mc',
+    'P2P': 'person-to-person',
+  },
+}
+
 var send = function(conn, text) {
   if (conn) {
     conn.sendText(text);
@@ -19,7 +35,6 @@ var send = function(conn, text) {
 }
 
 var recursionAsync = function(count, data, source, callback) {
-  var self = this;
   console.log(count, peos[count])
   if (count === 0) {
     console.log('All is Done!');
@@ -30,113 +45,134 @@ var recursionAsync = function(count, data, source, callback) {
   }
 };
 
-var sendTypeForPeo = function(data, source, callback) {
-  if (!data.name || !data.type) {
-    return;
-  }
-  var index = peos.indexOf(data.name);
-  console.log('~~~data', data)
-  switch(data.type) {
-    case 'call':
-      var callConn = peoReady[index];
-      send(callConn, source);
+var demoData = {
+  name: '张百鸽', // 必填
+  moduleType: 'ppt',
+  connectType: 'M2P',
+  roleType: 'mc', // 链接成功之后不需要该字段
+  from: 'mc',
+  to: 'beth',
+  data: {
+    eventType: 'changePage',
+    page: 1,
+    msg: '请看第一页PPT',
+  },
+};
+
+function receiveConnect(conn, source, req) {
+  var newSource = JSON.stringify(Object.assign({}, req, {
+    data: Object.assign({}, req.data, {
+      peos,
+      lives,
+    })
+  }));
+
+  switch(req.roleType) {
+    case Constant.ROLE_TYPE.MC_QRCODE:
+      mcs[0] = req.roleType;
+      mcReady[0] = conn;
+      // 入口连接
+    case Constant.ROLE_TYPE.MC_INPUT:
+      mcs[1] = req.roleType;
+      mcReady[1] = conn;
+      send(mcReady[0], source)
+    case Constant.ROLE_TYPE.MC:
+      mcs[2] = req.roleType;
+      mcReady[2] = conn;
       break;
-    case 'delete':
-      peos.splice(index, 1)
-      peoReady.splice(index, 1)
-      delete lives[data.name]
-      break;
-    case 'message':
-      var callConn = peoReady[i];
-      send(callConn, source);
-      break;
-    case 'ppt':
+    case Constant.ROLE_TYPE.PERSON:
+      var index = peos.indexOf(req.data.name);
+      if (peos.indexOf(req.data.name) === -1) {
+        peos.push(req.data.name);
+        peoReady.push(conn);
+      } else {
+        peos[index] = req.data.name;
+        peoReady[index] = conn;
+      }
+      if (req.data.role) {
+        lives[req.data.name] = req.data;
+      }
+      
       if (peoReady && peoReady.length) {
-        recursionAsync(peoReady.length, peoReady, source)
+        recursionAsync(
+          peoReady.length,
+          peoReady,
+          newSource
+        )
+      }
+      send(mcReady[2], newSource)
+      break;
+    default:
+      break;
+  }
+
+  send(conn, source);
+}
+
+function receiveMessage(conn, source, req) {
+  var newSource = source;
+  // var newSource = JSON.stringify(Object.assign({}, req, {
+  //   data: Object.assign({}, req.data, {
+  //     peos,
+  //     lives,
+  //   })
+  // }));
+  switch (req.connectType) {
+    case Constant.CONNECT_TYPE.M2P:
+      var index = peos.indexOf(req.to);
+      var callConn = peoReady[index];
+      send(callConn, newSource);
+      break;
+    case Constant.CONNECT_TYPE.M2A:
+      if (peoReady && peoReady.length) {
+        recursionAsync(
+          peoReady.length,
+          peoReady,
+          newSource
+        )
+      }
+      break;
+    case Constant.CONNECT_TYPE.M2S:
+      if (req.moduleType === 'other' && req.data.eventType === 'delete') {
+        peos.splice(index, 1)
+        peoReady.splice(index, 1)
+        delete lives[data.name]
+      }
+      break;
+    case Constant.CONNECT_TYPE.P2M:
+      send(mcReady[2], newSource);
+      break;
+    case Constant.CONNECT_TYPE.P2P:
+      send(mcReady[2], newSource);
+      if (peoReady && peoReady.length) {
+        recursionAsync(
+          peoReady.length,
+          peoReady,
+          newSource
+        )
       }
       break;
     default:
       break;
   }
 
-  if (callback) {
-    callback();
-  }
+  send(conn, newSource);
 }
 
 var server = ws.createServer(function(conn){
+  console.log(conn.id, '---- id ----');
     conn.on("text", function (source) {
-        console.log("收到的信息为:", source)
-        var req = JSON.parse(source);
+      console.log("收到的信息为:", source)
+      var req = source ? JSON.parse(source) : {};
+      if (!req.roleType && !req.connectType) {
+        return null;
+      }
 
-        // 初始化链接
-        if (req.roleType < 3) {
-          mcs[req.roleType] = req.roleType;
-          mcReady[req.roleType] = conn;
-        }else if (req.roleType === 3) {
-          if (req.data.name && req.data.peo) {
-            var index = peos.indexOf(req.data.name);
-            if (peos.indexOf(req.data.name) === -1) {
-              peos.push(req.data.name);
-              peoReady.push(conn);
-            } else {
-              peos[index] = req.data.name;
-              peoReady[index] = conn;
-            }
-            if (req.data.role) {
-              lives[req.data.name] = req.data;
-            }
-          }
-        }
-
-        console.log('-------roles------', mcs)
-        console.log('*******peos*******', peos)
-
-        // 处理MC进入主界面的逻辑
-        if (req.roleType === 1) {
-          // 入口连接
-          send(mcReady[0], source)
-          // mc输入名字连接
-          send(mcReady[1], source)
-        } else if (req.roleType === 2) {
-          if (req.data.type) {
-            sendTypeForPeo(req.data, source, function() {
-              send(mcReady[2], JSON.stringify({
-                roleType: req.roleType,
-                data: Object.assign({}, req.data, {
-                  peos,
-                  lives,
-                }),
-              }))
-            })
-          } else {
-            send(mcReady[2], source)
-          }
-        } else if (req.roleType === 3) {
-          send(conn, source)
-          if (req.data.name && req.data.peo) {
-            send(mcReady[2], JSON.stringify({
-              roleType: 3,
-              data: {
-                enter: true,
-                currentPeo: req.data.name,
-                peos,
-                lives,
-              },
-            }))
-            if (peoReady && peoReady.length) {
-              recursionAsync(peoReady.length, peoReady, source)
-            }
-          } else if (
-            req.data.name &&
-            (req.data.type === 'call' || req.data.type === 'message')
-          ) {
-            send(mcReady[2], source);
-          }
-        } else {
-          // 所有数据都会返回过去
-          send(conn, source)
-        }
+      if (req.roleType && !req.connectType) {
+        receiveConnect(conn, source, req);
+      } else {
+        receiveMessage(conn, source, req);
+      }
     })
 
     conn.on("close", function (code, reason) {

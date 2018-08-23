@@ -23,6 +23,18 @@ window[utils] =  {
   },
   isNumber: function(value) {
     return typeof value === 'number';
+  },
+  random: function(min, max) {
+    if (arguments.length < 2) {
+        max = min;
+        min = 0;
+    }
+    if (min > max) {
+        var hold = max;
+        max = min;
+        min = hold;
+    }
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }
 
@@ -36,13 +48,6 @@ var Component = {
         <div data-name="${item}" class="call">呼叫</div>
         <div data-name="${item}" class="delete">退出</div>
       </div>
-    </div>`;
-  },
-  Message: function(type, name, message, startTime, text) {
-    var className = Constant.classNames[type === 7 ? 7 : type % 7];
-    return `<div class="message-item message-${startTime}">
-      <div class="avatar border ${className}">${name}</div>
-      <div class="msg">${message}${!!text ? `<span class="active">${text}</span>` : ''}</div>
     </div>`;
   },
   LiveIndex: function(name, index, role, title) {
@@ -89,32 +94,13 @@ function initLocalData() {
   mainFuncs.joinLiveList(lives);
 }
 
-function  runBarrager(text){
-  var item={'img':'../images/heisenberg.png','info':text};
-  $('#ppt').barrager(item);
-  return true;
-}
-
-var logger = function(type, name, val, text, startTime) {
-  var startTime = startTime || (new Date()).getTime();
-  if (utils.isNumber(openType)) {
-    runBarrager(openText[openType] + name + ':' + val +(text || ''));
-    $('#mess').append(Component.Message(type !== 'MC' ? type : 7, name, openText[openType] + val, startTime, text));
-  } else {
-    runBarrager(name + ':' + val + (text || ''));
-    var html = Component.Message(type !== 'MC' ? type : 7, name, val, startTime, text);
-    $('#mess').append(html);
-  }
-  $('#mess').animate({scrollTop: $('.message-' + startTime).offset() ? $('.message-' + startTime).offset().top : 0}, 1000);
-}
-
 var mainFuncs = {
   joinParticipant: function(data) {
-    if (!$('.' + data.currentPeo).length) {
-      if (!$('.avatar-' + data.currentPeo).length) {
-        $('#joinParticipant').append(Component.Avatar(data.currentPeo, data.peos.length))
-        console.log($('.avatar-' + data.currentPeo).offset().top, '--top')
-        $('#joinParticipant').animate({scrollTop:$('.avatar-' + data.currentPeo).offset().top}, 1000);
+    if (!$('.' + data.name).length) {
+      if (!$('.avatar-' + data.name).length) {
+        $('#joinParticipant').append(Component.Avatar(data.name, data.peos.length))
+        console.log($('.avatar-' + data.name).offset().top, '--top')
+        $('#joinParticipant').animate({scrollTop:$('.avatar-' + data.name).offset().top}, 1000);
       }
       $('.currentNum').html(`当前人数:${data.peos.length}人`)
     }
