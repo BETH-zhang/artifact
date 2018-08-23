@@ -1,0 +1,133 @@
+/* 酷黑样式 */
+body {
+  overflow: hidden;
+  background-color: #0f1316;
+  color: #ccc;
+  background-image: url('../images/bg.jpeg')
+}
+
+.model {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.header {
+  /* margin-bottom: 14px; */
+  height: 56px;
+  color: #c61e61;
+  font-size: 16px;
+  background: #000;
+  border-bottom: 14px solid #0f1316;
+}
+
+.header .mc {
+  display: inline-block;
+  padding: 3px;
+  background: #c61e61;
+  color: #fff;
+  height: 26px;
+  line-height: 26px;
+  box-sizing: content-box;
+  border-radius: 5px;
+  margin: 5px;
+}
+
+.ppt {
+  margin-top: 12px;
+  width: 100%;
+  min-height: 200px;
+  background-color: #000;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.ppt img {
+  width: 100%;
+  display: none;
+}
+
+.call-you {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 150px;
+  height: 150px;
+  display: none;
+  z-index: 999;
+  margin-top: -75px;
+  margin-left: -75px;
+  text-align: center;
+}
+
+.call-you img {
+  display: block;
+  width: 100%;
+}
+
+#main {
+  padding: 20px;
+}
+
+.my-name,
+.mc,
+.my-role,
+.my-title {
+  float: left;
+  display: inline-block;
+  line-height: 42px;
+}
+
+.my-role {
+  line-height: 27px;
+}
+
+#mess {
+  position: relative;
+  top: 20px;
+  padding: 20px;
+  width: 100%;
+  min-height: calc(100vh - 150px);
+  border-color: #323232;
+  border-radius: 5px;
+  background: #000;
+  opacity: 0.8;
+}
+
+#mess p span.rotate {
+  margin-top: 3px;
+  margin-right: 5px;
+  display: inline-block;
+  float: left;
+  width: 16px;
+  height: 16px;
+  background: #E91E63;
+  border-radius: 50%;
+}
+
+#mess p .active {
+  color: aquamarine;
+}
+
+.input-message {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 9;
+  width: 100%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: #03A9F4;
+}
+
+.input-message input {
+  margin-left: 10px;
+  width: calc(100% - 122px);
+}
+
+.input-message button {
+  width: 72px;
+  position: absolute;
+  top: 0px;
+  right: 10px;
+  margin-top: 10px;
+}

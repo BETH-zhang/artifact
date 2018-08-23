@@ -1,3 +1,58 @@
+/* mobile样式 */
+.audio-src-m {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  z-index: 99;
+}
+
+.audio-src-m .sourse-img-m {
+  width: 40px;
+  height: 40px;
+}
+
+.audio-src-m .icont-rotate,
+.audio-src-m .iconz-rotate {
+  position: initial;
+  width: 40px;
+  height: 40px;
+}
+
+.apply-music {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  text-align: center;
+  z-index: 99;
+  background: #000;
+}
+
+.apply-music .btn-music {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin-top: -60px;
+  margin-left: -60px;
+  border-radius: 50%;
+  border: 10px solid #681d75;
+  background: #9C27B0;
+  color: #fff;
+}
+
+.apply-music .btn-music:active,
+.apply-music .btn-music:hover {
+  background: #861c98;
+}
+
+/* pc样式 */
 .audio-src {
   position: relative;
   top: -20px;

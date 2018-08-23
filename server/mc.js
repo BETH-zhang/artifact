@@ -47,6 +47,8 @@ var sendTypeForPeo = function(data, source, callback) {
       delete lives[data.name]
       break;
     case 'message':
+      var callConn = peoReady[i];
+      send(callConn, source);
       break;
     case 'ppt':
       if (peoReady && peoReady.length) {
@@ -125,7 +127,10 @@ var server = ws.createServer(function(conn){
             if (peoReady && peoReady.length) {
               recursionAsync(peoReady.length, peoReady, source)
             }
-          } else if (req.data.name && req.data.type === 'call') {
+          } else if (
+            req.data.name &&
+            (req.data.type === 'call' || req.data.type === 'message')
+          ) {
             send(mcReady[2], source);
           }
         } else {

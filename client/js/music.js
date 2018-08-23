@@ -1,6 +1,114 @@
-(function(current, framework) {
+/**
+ * BBMusic
+ * 1.0.0
+ * Copyright (c) 2018-08-22 11:32:20 Beth
+ * 直播调用PPT
+ * depend [jQuery.js, music.css]
+ */
 
-  var music = function() {
+(function(current, framework) {
+  function isMobile() {
+    if ((navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i))) {
+      /*window.location.href="你的手机版地址";*/
+      return true;
+    } else {
+      /*window.location.href="你的电脑版地址";*/
+      return false;
+    }
+  }
+
+  // 音乐播放
+  function backgroundMusic(audio){
+    // 自动播放音乐效果，解决浏览器或者APP自动播放问题
+    if(audio.paused){
+      audio.load();
+      audio.play();
+    }
+    function musicInBrowserHandler() {
+      if(audio.paused){
+        audio.load();
+        audio.play();
+      }
+      document.body.removeEventListener('touchstart', musicInBrowserHandler);
+    }
+    document.body.addEventListener('touchstart', musicInBrowserHandler);
+
+    // 自动播放音乐效果，解决微信自动播放问题
+    function musicInWeixinHandler() {
+      if(audio.paused){
+        audio.load();
+        audio.play();
+      }
+      document.addEventListener("WeixinJSBridgeReady", function () {
+        if(audio.paused){
+          audio.load();
+          audio.play();
+        }
+      }, false);
+      document.removeEventListener('DOMContentLoaded', musicInWeixinHandler);
+    }
+    document.addEventListener('DOMContentLoaded', musicInWeixinHandler);
+  }
+
+  var music = function(id) {
+    function pcHtml() {
+      if (!id) {
+        console.warn('没有传入元素id');
+        return {};
+      }
+      var ele = document.getElementById(id);
+      ele.innerHTML = `
+        <div class="audio-src">
+          <div class="audio-title">音乐专区</div>
+          <!--音频列表-->
+          <div class="content-index clearfix js_clickbtn">
+            <div class="sourse-img start-rotate">
+              <img src="./images/cover.jpg" alt="声波图" class="icont-rotate"/>
+              <div class='iconz-rotate'></div>
+              <div class='icon-rotate'></div>
+            </div>
+            <!--音频box-->
+            <div class="audio-box clearfix">
+              <div bindtap='clickAudio'>
+                <img class="music-btn music-pause-btn" src="../../images/pause.png" />
+                <img class='music-btn music-play-btn' src="../../images/play.png" />
+              </div>
+              <span class="start-time">00:00</span>
+              <div class="time-bar">
+                <img class="time-bar-img" src="//js.ibaotu.com/revision/img/max-shengbo.png" alt="声波图"/>
+                <div class='time-bar-bg' style="width: 0px;"></div>
+              </div>
+              <span class="end-time">00:00</span>
+              <audio class='hide' src="" id="myAudio" controls loop></audio>
+            </div> 
+          </div>
+        </div>
+      `;
+    }
+
+    function mHtml() {
+      $('body').append(`
+        <div class="audio-src-m">
+          <div class="sourse-img-m start-rotate">
+            <img src="./images/cover.jpg" alt="声波图" class="icont-rotate"/>
+          </div>
+          <audio class='hide' src="" id="myAudio" controls loop></audio>
+        </div>
+      `);
+      $('body').append(`
+        <div class="apply-music">
+          <button class="btn-music" id="apply-music">点我</button>
+        </div>
+      `);
+    }
+
+    var isPc = !isMobile();
+    if (!isPc) {
+      mHtml();
+    } else {
+      pcHtml();
+    }
+
     var defaultConfig = {
       status: 0,
       defaultTime: '0:00',
@@ -9,9 +117,9 @@
       duration: '0:00',
       currentProgress: 0,
       poster: 'http://y.gtimg.cn/music/photo_new/T002R300x300M000003rsKF44GyaSk.jpg?max_age=2592000',
-      name: '此时此刻',
-      author: '许巍',
-      src: 'http://ws.stream.qqmusic.qq.com/M500001VfvsJ21xFqb.mp3?guid=ffffffff82def4af4b12b3cd9337d5e7&uin=346897220&vkey=6292F51E1E384E06DCBDC9AB7C49FD713D632D313AC4858BACB8DDD29067D3C601481D36E62053BF8DFEAF74C0A5CCFADD6471160CAF3E6A&fromtag=46',
+      name: '爱上幼儿园',
+      author: '张庭',
+      src: '../data/2.mp3',
     }
 
     var secToTime = function (log) {
@@ -38,16 +146,32 @@
     }
 
     return {
-      init: function(autoPlay) {
-        this.config = defaultConfig;
+      init: function(config) {
+        var me = this;
+        this.config = Object.assign({}, defaultConfig, config);
         this.audioCtx = $("#myAudio")[0];
+        this.audioCtx.src = this.config.src;
 
-        this.initTemplate();
-
-        this.initListener();
-        if (autoPlay) {
+        if (isPc) {
+          this.initListener();
+        } else {
+          backgroundMusic(this.audioCtx);
+          $('#apply-music').click(function() {
+            me.audioPlay();
+            $('.apply-music').hide();
+          });
+        }
+        if (this.config.autoPlay) {
           this.audioPlay();
         }
+        $('.icont-rotate').click(function() {
+          var className = $(this).attr('class');
+          if (className.indexOf('music-playing') >= 0) {
+            me.audioPause();
+          } else {
+            me.audioPlay();
+          }
+        });
       },
       initListener: function() {
         $('.music-pause-btn').click(this.audioPause.bind(this));
@@ -60,18 +184,24 @@
         this.audioCtx.oncanplay = this.canplay;
         this.audioCtx.oncanplaythrough = this.canplaythrough;
       },
-      initTemplate: function() {
-        this.config.duration = secToTime(this.audioCtx.duration);
-        this.config.currentTime = secToTime(this.audioCtx.currentTime);
-        this.config.progress = (this.audioCtx.currentTime / this.audioCtx.duration) * 100;
-        $('.end-time').html(this.config.duration);
-        $('.start-time').html(this.config.currentTime);
-        $('.time-bar-bg').css({ width: this.config.progress + 'px' });
-      },
-      updateProgress: function() {
-        if (!this.audioCtx.paused) {
-          this.initTemplate();
+      updateTemplate: function() {
+        var me = this;
+        if (this.timer) {
+          clearInterval(this.timer);
         }
+        this.timer = setInterval(function() {
+          me.config.duration = secToTime(me.audioCtx.duration);
+          me.config.currentTime = secToTime(me.audioCtx.currentTime);
+          me.config.progress = (me.audioCtx.currentTime / me.audioCtx.duration) * 100;
+          $('.end-time').html(me.config.duration);
+          $('.start-time').html(me.config.currentTime);
+          $('.time-bar-bg').css({ width: me.config.progress + 'px' }); 
+
+          if (me.audioCtx.currentTime >= me.audioCtx.duration) {
+            clearInterval(me.timer);
+            me.timer = null;
+          }
+        }, 1000);
       },
       loadstart: function(e) {
         console.log('loadstart', e)
@@ -99,12 +229,29 @@
         $('.music-pause-btn').show();
         $('.music-play-btn').hide();
         $('.icont-rotate').addClass('music-playing');
+
+        if (isPc) {
+          this.updateTemplate();
+        }
       },
       audioPause: function () {
         this.audioCtx.pause();
         $('.music-pause-btn').hide();
         $('.music-play-btn').show();
         $('.icont-rotate').removeClass('music-playing');
+
+        if (isPc && this.timer) {
+          clearInterval(this.timer);
+          this.timer = null;
+        }
+      },
+      changeMusic: function(src) {
+        this.audioCtx.src = src;
+        this.audioPlay();
+      },
+      initMusic: function() {
+        this.audioPause();
+        this.audioCtx.src = this.config.src;
       },
       audio14: function () {
         this.audioCtx.seek(14)
@@ -115,5 +262,5 @@
     }
   };
 
-  current[framework] = music();
-})(window, 'bbMusic')
+  current[framework] = music;
+})(window, 'BBMusic')

@@ -7,151 +7,40 @@
   <title>参加人界面</title>
   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
   <link rel="stylesheet" href="./css/index.css">
-  <!-- <link rel="stylesheet" href="./css/music.css"> -->
+  <link rel="stylesheet" href="./css/music.css">
   <link rel="stylesheet" href="./css/ppt.css">
+  <link rel="stylesheet" href="./css/participant.css">
 
-  <style>
-    /* 酷黑样式 */
-    body {
-      /* overflow: hidden; */
-      /* background: #0f1316; */
-      color: #ccc;
-      background: url('./images/bg.jpeg')
-    }
-
-    .model {
-      padding: 50px 20px;
-      text-align: center;
-    }
-
-    .header {
-      /* margin-bottom: 14px; */
-      height: 56px;
-      color: #c61e61;
-      font-size: 16px;
-      background: #000;
-      border-bottom: 14px solid #0f1316;
-    }
-
-    .header .mc {
-      display: inline-block;
-      padding: 3px;
-      background: #c61e61;
-      color: #fff;
-      height: 26px;
-      line-height: 26px;
-      box-sizing: content-box;
-      border-radius: 5px;
-      margin: 5px;
-    }
-    
-    .ppt {
-      margin-top: 12px;
-      width: 100%;
-      min-height: 200px;
-      background-color: #000;
-      background-repeat: no-repeat;
-      background-size: cover;
-    }
-
-    .ppt img {
-      width: 100%;
-      display: none;
-    }
-
-    .call-you,
-    .apply-music {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100vh;
-      display: none;
-      text-align: center;
-      z-index: 9;
-      background: #000;
-    }
-
-    .call-you img {
-      display: block;
-      width: 100%;
-    }
-
-    #main {
-      padding: 20px;
-    }
-
-    .my-name,
-    .mc,
-    .my-role,
-    .my-title {
-      float: left;
-      display: inline-block;
-      line-height: 42px;
-    }
-
-    .my-role {
-      line-height: 27px;
-    }
-
-    #mess {
-      position: relative;
-      top: 20px;
-      padding: 20px;
-      width: 100%;
-      min-height: calc(100vh - 150px);
-      border-color: #323232;
-      border-radius: 5px;
-      background: #000;
-      opacity: 0.8;
-    }
-
-    #mess p span.rotate {
-      margin-top: 3px;
-      margin-right: 5px;
-        display: inline-block;
-        float: left;
-        width: 16px;
-        height: 16px;
-        background: #E91E63;
-        border-radius: 50%;
-    }
-
-    #mess p .active {
-      color: aquamarine;
-    }
-
-  </style>
 </head>
 <body>
-    <div class="model">
-        <div class="mc-name">
-          <input type="text" class="form-control" id="mcName" placeholder="你的名字"/>
-        </div>
-        <br />
-        <div class="mc-role">
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio0" value="option-1">
-            <label class="form-check-label" for="inlineRadio0">我是游客</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option0">
-            <label class="form-check-label" for="inlineRadio1">我是新人</label>
-          </div>
-          <div class="form-check form-check-inline">
-              <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option1">
-              <label class="form-check-label" for="inlineRadio2">工作汇报</label>
-            </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option2">
-            <label class="form-check-label" for="inlineRadio3">我要分享</label>
-          </div>
-        </div>
-        <br />
-        <input type="text" class="form-control share-title" placeholder="请填写所在部门/分享主题"/>
-        <br />
-        <button class="btn btn-primary" id="mcInput">进入</button>
+  <div class="model">
+    <div class="mc-name">
+      <input type="text" class="form-control" id="mcName" placeholder="你的名字"/>
     </div>
+    <br />
+    <div class="mc-role">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio0" value="option-1">
+        <label class="form-check-label" for="inlineRadio0">我是游客</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option0">
+        <label class="form-check-label" for="inlineRadio1">我是新人</label>
+      </div>
+      <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option1">
+          <label class="form-check-label" for="inlineRadio2">工作汇报</label>
+        </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio3" value="option2">
+        <label class="form-check-label" for="inlineRadio3">我要分享</label>
+      </div>
+    </div>
+    <br />
+    <input type="text" class="form-control share-title" placeholder="请填写所在部门/分享主题"/>
+    <br />
+    <button class="btn btn-primary" id="mcInput">进入</button>
+  </div>
 
   <div id="main">
     <div class="header">
@@ -176,45 +65,19 @@
       ></iframe>
     </div>
 
-    <div class="call-you">
-      <img src="./images/call.gif" />
-      <button class="btn btn-primary" id="replay-you">我在我在</button>
+    <!-- 发送消息 -->
+    <div class="input-message">
+      <input type="text" class="form-control" id="inputMessage" placeholder=""/>
+      <button class="btn btn-primary" id="sendMessage">发送</button>
     </div>
-    <div class="apply-music">
-        <button class="btn btn-primary" id="apply-music">允许音频播放</button>
+
+    <div class="call-you">
+      <img id="replay-you" src="./images/call.gif" />
     </div>
     
     <!-- Alert -->
     <div id="mess">正在连接...</div>
 
-    <!-- 音悦台 -->
-    <div class="music-item" style="display: none">
-        <div class="audio-src">
-          <div class="audio-title">音乐专区</div>
-          <!--音频列表-->
-          <div class="content-index clearfix js_clickbtn">
-            <div class="souse-img start-rotate">
-              <img src="./images/cover.jpg" alt="声波图" class="icont-rotate"/>
-              <div class='iconz-rotate'></div>
-              <div class='icon-rotate'></div>
-            </div>
-            <!--音频box-->
-            <div class="audio-box clearfix">
-              <div bindtap='clickAudio'>
-                <img class="music-btn music-pause-btn" src="../../images/pause.png" />
-                <img class='music-btn music-play-btn' src="../../images/play.png" />
-              </div>
-              <span class="start-time">00:00</span>
-              <div class="time-bar">
-                <img class="time-bar-img" src="//js.ibaotu.com/revision/img/max-shengbo.png" alt="声波图"/>
-                <div class='time-bar-bg' style="width: 20px;"></div>
-              </div>
-              <span class="end-time">00:00</span>
-              <audio class='hide' src="./data/call.mp3" id="myAudio" controls loop></audio>
-            </div>
-          </div>
-        </div>
-      </div>
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
@@ -222,7 +85,7 @@
   <script src="./js/constant.js"></script>
   <script src="./js/mc.js"></script>
   <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script>
-  <!-- <script src="./js/music.js?t=5"></script> -->
+  <script src="./js/music.js?t=6"></script>
   <script src="./js/liveppt-1.0.0.js"></script>
  
   <script>
@@ -235,38 +98,14 @@ var $replayYou = $('#replay-you');
 
 var queryString = utils.queryString();
 if (queryString.name) {
+  var bbMusic = new BBMusic('music');
+  bbMusic.init();
   $main.show();
   $('.model').hide();
 } else {
   $main.hide();
   $('.model').show();
 }
-
-var frist = false;
-var musicEle = $("#myAudio")[0];
-$('.apply-music').on('touchstart',function(){
-    $('.apply-music').hide();
-    frist = true;
-});
-
-$('.apply-music').on('click',function(){
-    $('.apply-music').hide();
-    frist = true;
-});
-
-function playMusic() {
-  if(musicEle.paused){
-    musicEle.play();
-    $('.call-you').show();
-  }else{
-    musicEle.pause();
-    $('.call-you').show();
-  }
-}
-
-$('.call-you').on('click', function() {
-  playMusic();
-});
 
 function updatePPT(index) {
   var currentIndex = index || 0;
@@ -374,40 +213,21 @@ var mainInit = function(ws) {
       },
     }));
   });
+
+  $('#sendMessage').click(function() {
+    var msg = $('#inputMessage').val();
+    if (msg) {
+      ws.send(JSON.stringify({
+        roleType: 3,
+        data: {
+          type: 'message',
+          name: queryString.name,
+          message: msg,
+        },
+      }));
+    }
+  });
 }
-
-  // 音乐播放
-  function backgroundMusic(audio){
-    // 自动播放音乐效果，解决浏览器或者APP自动播放问题
-    if(audio.paused){
-        audio.load();
-        audio.play();
-    }
-    function musicInBrowserHandler() {
-        if(audio.paused){
-            audio.load();
-            audio.play();
-        }
-        document.body.removeEventListener('touchstart', musicInBrowserHandler);
-    }
-    document.body.addEventListener('touchstart', musicInBrowserHandler);
-
-    // 自动播放音乐效果，解决微信自动播放问题
-    function musicInWeixinHandler() {
-        if(audio.paused){
-            audio.load();
-            audio.play();
-        }
-        document.addEventListener("WeixinJSBridgeReady", function () {
-            if(audio.paused){
-                audio.load();
-                audio.play();
-            }
-        }, false);
-        document.removeEventListener('DOMContentLoaded', musicInWeixinHandler);
-    }
-    document.addEventListener('DOMContentLoaded', musicInWeixinHandler);
-  }
 
 if(window.WebSocket){
     var ws = new WebSocket('ws://172.16.15.185:8001');
@@ -428,7 +248,6 @@ if(window.WebSocket){
 
       if (queryString.name) {
         mainInit(ws);
-        $('.apply-music').show();
       } else if (!queryString.name) {
         init(ws);
       }
@@ -449,16 +268,14 @@ if(window.WebSocket){
           + '?name=' + res.data.name + '&role=' + res.data.role + '&title=' + res.data.title;
       } else if (res.roleType === 2 && res.data.type === 'call') {
         logger("MC呼叫你~~~~");
-        // bbMusic.init('auto');
-        backgroundMusic(musicEle);
-        // $('.call-you').show()
-        playMusic();
+        bbMusic.changeMusic('./data/call.mp3');
+        $('.call-you').show()
       } else if (res.roleType === 3 && res.data.peo) {
         logger(res.data.name + '加入~~~', res.data.role && `${currentRoleText(res.data.role)} ${res.data.title}`);
       } else if (res.roleType === 3 && res.data.type === 'call') {
         logger(((res && (res.data.message || res.data.name)) || ''));
+        bbMusic.initMusic();
         $('.call-you').hide();
-        // bbMusic.audioPause();
         if(!musicEle.paused){
           musicEle.pause();
         } 
