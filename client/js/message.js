@@ -15,12 +15,41 @@
 
   var Version = '1.0.0';
 
+  //是否首次执行
+  var run_once = true;
+  //弹幕索引
+  var index = 0;
+  //每条弹幕发送间隔
+  var looper_time= 3*1000;
+  var msgData = [];
+  var looper = null
+
+  function barrager() {
+    //发布一个弹幕
+    $('body').barrager({
+      info: msgData[0], //文字 
+      href: '', //链接
+      speed: 16,
+      close: false, //显示关闭按钮 
+    });
+
+    msgData.splice(0, 1)
+    //所有弹幕发布完毕，清除计时器。
+    if(!msgData.length){
+      clearInterval(looper);
+      looper = null;
+      run_once = true;
+    }
+  } 
+
   function runBarrager(text){
-    var item={'img':'../images/heisenberg.png','info':text};
-    $('#ppt').barrager(item);
-    return true;
+    msgData.push(text);
+    if (run_once) {
+      looper = setInterval(barrager, looper_time);
+      run_once = false;
+    }
   }
-  
+
   var Component = {
     Message: function(name, message, startTime, order) {
       var className = Constant.classNames[utils.random(0, 7)];

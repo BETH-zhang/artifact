@@ -483,6 +483,7 @@ body {
   color: #fff;
   z-index: 9;
   opacity: 0.3;
+  display: none;
 }
 
 .other-opt a.noFullScreen {
