@@ -25,10 +25,10 @@
     Message: function(name, message, startTime, order) {
       var className = Constant.classNames[utils.random(0, 7)];
       if (!order) {
-        runBarrager(`${name}:${message}`);
+        // runBarrager(`${name || '匿名'}:${message}`);
       }
       return `<div class="message-item message-${startTime}" style="min-height: 50px">
-        <div class="avatar border ${className}">${name}</div>
+        <div class="avatar border ${className}">${name || '匿名'}</div>
         <div class="msg">${message}</div>
       </div>`;
     },

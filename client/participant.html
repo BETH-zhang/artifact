@@ -62,6 +62,7 @@
         frameBorder=0
         allowTransparency
         allow="camera;microphone;autoplay"
+        style="display:none"
       ></iframe>
     </div>
 
@@ -77,7 +78,6 @@
     
     <!-- Alert -->
     <div id="mess">正在连接...</div>
-
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
@@ -87,7 +87,7 @@
   <script src="./js/music.js?t=6"></script>
   <!-- <script src="./js/timeline-1.0.0-alpha.js"></script> -->
   <script src="./js/liveppt-1.0.0.js"></script>
-  <script src="./js/message.js?t=1"></script>
+  <script src="./js/message.js?t=2"></script>
  
   <script>
 // 初始化
@@ -214,13 +214,16 @@ var mainInit = function(ws) {
         },
       }));
     }
+    $('#inputMessage').val('');
   });
 }
 
+var pptOrigin = 'http://172.16.15.185:8081';
+// var pptOrigin = 'http://10.0.0.13:8081';
 var receivePptMsg = function(res) {
   var iframe = window.frames[0];
   // 传递消息
-  iframe.postMessage(JSON.stringify(res), 'http://172.16.15.185:8081'); 
+  iframe.postMessage(JSON.stringify(res), pptOrigin); 
 }
 
 var receiveOtherMsg = function(res) {
@@ -233,6 +236,10 @@ var receiveOtherMsg = function(res) {
     $('.call-you').hide();
   } else if (res.data.eventType === 'ppt' && res.data.page) {
     updatePPT(res.data.page);
+  } else if (res.data.eventType === 'hide-ppt') {
+    $('#ppt-h5').hide();
+  } else if (res.data.eventType === 'show-ppt') {
+    $('#ppt-h5').show();
   }
 }
 
@@ -251,7 +258,7 @@ var receiveConnect = function(res) {
 var receiveMessage = function(res) {
   switch(res.moduleType) {
     case Constant.MODULE_TYPE.PPT:
-      receivePptMsg(res);
+      receivePptMsg(res.data);
       break;
     case Constant.MODULE_TYPE.MESSAGE:
       break;
@@ -266,14 +273,13 @@ var receiveMessage = function(res) {
       break;
   }
 
-  console.log(message)
   message.push(res.name, '~' + (res.data.message || '连接成功'), true);
 }
 
 if(window.WebSocket){
-    // var ws = new WebSocket('ws://172.16.15.185:8001');
+    var ws = new WebSocket('ws://172.16.15.185:8001');
     // var ws = new WebSocket('ws://192.168.1.106:8001');
-    var ws = new WebSocket('ws://10.0.0.13:8001');
+    // var ws = new WebSocket('ws://10.0.0.13:8001');
     ws.onopen = function(e){
       console.log("连接服务器成功");
 
@@ -312,13 +318,13 @@ if(window.WebSocket){
     }
   }
 
-  // // 初始化ppt内容
-  // var LivePPT = new LivePPT(
-  //   document.getElementById('ppt-h5'),
-  //   'http://10.0.0.13:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
-  //   // 'http://172.16.15.185:8081/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
-  //   'student',
-  // );
+  // 初始化ppt内容
+  var LivePPT = new LivePPT(
+    document.getElementById('ppt-h5'),
+    pptOrigin + '/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
+    // pptOrigin + '/newppt/newppt.html?isLoadPageController=true&hideCustomPage=true',
+    'student',
+  );
 
   </script>
 </body>

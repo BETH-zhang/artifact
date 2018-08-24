@@ -35,14 +35,21 @@ var send = function(conn, text) {
 }
 
 var recursionAsync = function(count, data, source, callback) {
-  console.log(count, peos[count])
-  if (count === 0) {
-    console.log('All is Done!');
-  }	else {
-    count -= 1;
-    send(data[count], source);
-    recursionAsync(count, data, source, callback);
+  for (var i = 0; i < count; i++) {
+    if (i === count - 1) {
+      if (callback) {
+        callback();
+      }
+    }
   }
+  // console.log(count, peos[count])
+  // if (count === 0) {
+  //   console.log('All is Done!');
+  // }	else {
+  //   count -= 1;
+  //   send(data[count], source);
+  //   recursionAsync(count, data, source, callback);
+  // }
 };
 
 var demoData = {

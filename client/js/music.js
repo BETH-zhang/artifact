@@ -154,15 +154,18 @@
 
         if (isPc) {
           this.initListener();
-        } else {
-          backgroundMusic(this.audioCtx);
-          $('#apply-music').click(function() {
-            me.audioPlay();
-            $('.apply-music').hide();
-          });
         }
         if (this.config.autoPlay) {
           this.audioPlay();
+
+          if (!isPc) {
+            backgroundMusic(this.audioCtx);
+            $('.apply-music').show();
+            $('#apply-music').click(function() {
+              me.audioPlay();
+              $('.apply-music').hide();
+            });
+          }
         }
         $('.icont-rotate').click(function() {
           var className = $(this).attr('class');
@@ -176,13 +179,13 @@
       initListener: function() {
         $('.music-pause-btn').click(this.audioPause.bind(this));
         $('.music-play-btn').click(this.audioPlay.bind(this));
-        this.audioCtx.onloadstart = this.loadstart;
-        this.audioCtx.ondurationchange = this.durationchange;
-        this.audioCtx.onloadedmetadata = this.loadedmetadata;
-        this.audioCtx.onloadeddata = this.loadeddata;
-        this.audioCtx.onprogress = this.progress;
-        this.audioCtx.oncanplay = this.canplay;
-        this.audioCtx.oncanplaythrough = this.canplaythrough;
+        // this.audioCtx.onloadstart = this.loadstart;
+        // this.audioCtx.ondurationchange = this.durationchange;
+        // this.audioCtx.onloadedmetadata = this.loadedmetadata;
+        // this.audioCtx.onloadeddata = this.loadeddata;
+        // this.audioCtx.onprogress = this.progress;
+        // this.audioCtx.oncanplay = this.canplay;
+        // this.audioCtx.oncanplaythrough = this.canplaythrough;
       },
       updateTemplate: function() {
         var me = this;
@@ -193,6 +196,7 @@
           me.config.duration = secToTime(me.audioCtx.duration);
           me.config.currentTime = secToTime(me.audioCtx.currentTime);
           me.config.progress = (me.audioCtx.currentTime / me.audioCtx.duration) * 100;
+          console.log(me.config.progress);
           $('.end-time').html(me.config.duration);
           $('.start-time').html(me.config.currentTime);
           $('.time-bar-bg').css({ width: me.config.progress + 'px' }); 

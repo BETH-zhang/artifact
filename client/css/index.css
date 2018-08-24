@@ -451,3 +451,19 @@ body {
   box-shadow: 0 0 10px #666;
   text-decoration: none;
 }
+
+.zan-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 9;
+  /* margin-top: 0;
+  margin-left: 0;
+  width: 0;
+  height: 0; */
+  width: 270;
+  height: 270;
+  margin-top: -135;
+  margin-left: -135;
+  display: none;
+}

@@ -31,6 +31,7 @@
   text-align: center;
   z-index: 99;
   background: #000;
+  display: none;
 }
 
 .apply-music .btn-music {

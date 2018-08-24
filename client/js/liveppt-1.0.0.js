@@ -14,6 +14,7 @@
  * 4.如果用户断开之后如何回到上一步上课状态
  * 5.如何处理不同角色PPT的样式
  * 6.PPT转H5本身的问题严重
+ * 7.PPT转换是否支持视频和音频
  */
 
 (function(global, factory) {
@@ -153,10 +154,11 @@
     return ele;
   }
   
-  function LivePPT(ele, src, role) {
+  function LivePPT(ele, src, role, style) {
     if (ele && src) {
-      console.log(ele.clientWidth, ele.clientHeight);
-      ele.height = ele.clientWidth / (16 / 9);
+      var width = ele.clientWidth || $('.ppt').width();
+      console.log(ele.clientWidth, ele.clientHeight, $('.ppt').width(), width);
+      ele.height = width / (16 / 9);
       ele.src = src;
     }
     

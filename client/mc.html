@@ -20,6 +20,9 @@
       <a href="javascript:;" id="sendLove">送爱心</a>
       <a href="javascript:;" id="openPPT">打开PPT</a>
       <a href="javascript:;" id="playback">生成回放</a>
+      <a href="javascript:;" id="clickzan">点赞</a>
+      <img src="./images/zan.gif" class="zan-img" />
+
     </div>
     <span class="time"></span>
   </div>
@@ -55,6 +58,7 @@
           frameBorder=0
           allowTransparency
           allow="camera;microphone;autoplay"
+          style="display:none"
         ></iframe>
       </div>
 
@@ -75,7 +79,6 @@
       <div class="talk-list">
         <div id="mess"></div>
       </div>
- 
     </div>
   </div>
 
@@ -109,7 +112,7 @@
   <script src="./js/music.js?t=6"></script>
   <script src="./js/timeline-1.0.0-alpha.js"></script>
   <script src="./js/liveppt-1.0.0.js"></script>
-  <script src="./js/message.js?t=1"></script>
+  <script src="./js/message.js?t=2"></script>
 
   <!-- <script src="./js/mc.js?sss=2"></script> -->
   <script>
@@ -202,7 +205,6 @@ var mainInit = function(ws) {
 
   // 初始化二维码
   var realPath1 = document.location.origin + '/participant.html?mc=' + queryString.name;
-  console.log(realPath1)
   $peoQrcode.qrcode({
     text: realPath1,  //设置二维码内容
     width: 160,
@@ -260,6 +262,53 @@ var mainInit = function(ws) {
       },
     }));
   });
+  var pptStatus = 'off';
+  $('#openPPT').click(function() {
+    if (pptStatus === 'off') {
+      pptStatus = 'on';
+      $('#ppt-h5').show();
+      $(this).text('关闭PPT');
+
+      ws.send(JSON.stringify({
+        connectType: Constant.CONNECT_TYPE.M2A,
+        moduleType: Constant.MODULE_TYPE.OTHER,
+        from: 'mc',
+        name: queryString.name,
+        data: {
+          eventType: 'show-ppt',
+          message: 'MC打开PPT',
+        },
+      }));
+    } else {
+      pptStatus = 'off';
+      $('#ppt-h5').hide();
+      $(this).text('打开PPT');
+
+      ws.send(JSON.stringify({
+        connectType: Constant.CONNECT_TYPE.M2A,
+        moduleType: Constant.MODULE_TYPE.OTHER,
+        from: 'mc',
+        name: queryString.name,
+        data: {
+          eventType: 'hide-ppt',
+          message: 'MC打开PPT',
+        },
+      }));
+      receivePptMsg(0);
+    }
+  });
+  var zanStatus = 'off';
+  $('#clickzan').click(function() {
+    if (zanStatus === 'off') {
+      zanStatus = 'on';
+      $('.zan-img').show();
+      bbMusic.changeMusic('./data/zan.mp3');
+    } else {
+      zanStatus = 'off';
+      $('.zan-img').hide();
+      bbMusic.initMusic();
+    }
+  });
 }
 
 function bindDelete() {
@@ -303,6 +352,53 @@ var resetBindEvent = function() {
   $('.delete').bind('click', bindDelete);
 }
 
+var pptOrigin = 'http://172.16.15.185:8081';
+// var pptOrigin = 'http://10.0.0.13:8081';
+
+var ws = null;
+var receivePptMsg = function(slide) {
+  console.log('1111', slide);
+  if (slide < 0) {
+    console.log('非法传入');
+    return null;
+  }
+  var tpEle = LivePPT.getIframeEle('ppt-h5', 'customController_totalSlideSpan');
+  var totalPage = LivePPT.matchNumber(tpEle.innerText)[0];
+  console.log(totalPage);
+  if (slide > totalPage - 1) {
+    console.log('非法传入');
+    return null;
+  }
+
+  var data = Object.assign({}, {
+    type: 'ppt',
+    name: queryString.name,
+  }, {
+    source: "tk_dynamicPPT",
+    data: {
+      action: 'slideChangeEvent',
+      // externalData: {initiative: true},
+      slide: slide,
+      // step: 0,
+      stepTotal: 1,
+    },
+  });
+
+  console.log('1111', data);
+
+  var iframe = window.frames[0];
+  // 传递消息
+  iframe.postMessage(JSON.stringify(data), pptOrigin);
+
+  ws.send(JSON.stringify({
+    connectType: Constant.CONNECT_TYPE.M2A,
+    moduleType: Constant.MODULE_TYPE.PPT,
+    from: 'mc',
+    name: queryString.name,
+    data: data,
+  }));
+}
+
 var receiveOtherMsg = function(res) {
   if (res.data.eventType === 'call') {
     var peos = localStorage.getItem('peos');
@@ -318,7 +414,7 @@ var receiveConnect = function(res) {
   if (res.roleType === Constant.ROLE_TYPE.MC_INPUT && res.data.name) {
     window.location.href = document.location.origin + document.location.pathname
       + '?name=' + res.data.name;
-  } else if (res.roleType === Constant.ROLE_TYPE.PERSON) {
+  } else if (res.roleType === Constant.ROLE_TYPE.PERSON && res.data.peos) {
     mainFuncs.joinParticipant(res.data);
     mainFuncs.joinLiveList(res.data.lives);
     localStorage.setItem('peos', JSON.stringify(res.data.peos))
@@ -350,13 +446,12 @@ var receiveMessage = function(res) {
   message.push(res.name, '~' + (res.data.message || '连接成功'));
 }
 
-var ws = null;
 if(window.WebSocket){
   initLocalData();
 
-  // ws = new WebSocket('ws://172.16.15.185:8001');
+  ws = new WebSocket('ws://172.16.15.185:8001');
   // var ws = new WebSocket('ws://192.168.1.106:8001');
-  var ws = new WebSocket('ws://10.0.0.13:8001');
+  // var ws = new WebSocket('ws://10.0.0.13:8001');
   ws.onopen = function(e){
     console.log("连接服务器成功");
     ws.send(JSON.stringify({
@@ -394,7 +489,43 @@ if(window.WebSocket){
   }
 }
 
+ // 初始化ppt内容
+ var LivePPT = new LivePPT(
+  document.getElementById('ppt-h5'),
+  pptOrigin + '/newppt/newppt.html?isLoadPageController=true',
+  // pptOrigin + '/newppt/newppt.html?isLoadPageController=true',
+  'teacher',
+);
 
-  </script>
+LivePPT.addEvent(function(e) {
+  // 鼠标在iframe之外的区域打开才OK
+  switch(e.type) {
+    case 'keydown':
+      console.log('监听到键盘事件', e);
+      var ele = LivePPT.getIframeEle('ppt-h5', 'customController_skipSlide');
+      if (e.keyCode === 39) {
+        receivePptMsg(Number(ele.value));
+      } else if (e.keyCode === 37) {
+        receivePptMsg(Number(ele.value) - 2);
+      }
+      break;
+    default:
+      break;
+  }
+});
+
+LivePPT.receiveEvent(pptOrigin, function(res) {
+  console.log(res, typeof res);
+  ws.send(JSON.stringify({
+    connectType: Constant.CONNECT_TYPE.M2A,
+    moduleType: Constant.MODULE_TYPE.PPT,
+    data: Object.assign({}, {
+      eventType: 'ppt',
+      name: queryString.name,
+    }, res),
+  }));
+});
+
+</script>
 </body>
 </html>
