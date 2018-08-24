@@ -21,6 +21,7 @@
       <a href="javascript:;" id="openPPT">打开PPT</a>
       <a href="javascript:;" id="playback">生成回放</a>
       <a href="javascript:;" id="clickzan">点赞</a>
+      <a href="javascript:;" id="noFullScreen" class="noFullScreen">回</a>
       <img src="./images/zan.gif" class="zan-img" />
 
     </div>
@@ -237,18 +238,20 @@ var mainInit = function(ws) {
 
   // 初始化其他按钮事件
   $('#fullScreen').click(function() {
-    var status = $(this).attr('data-status');
-    if (status === 'on') {
-      $('.left').animate({ marginLeft: 0 });
-      $('.right').animate({ marginRight: 0 });
-      $('.share-lists').animate({ bottom: 0 });
-      $(this).attr('data-status', 'off');
-    } else {
-      $('.left').animate({ marginLeft: -210 });
-      $('.right').animate({ marginRight: -265 });
-      $('.share-lists').animate({ bottom: -120 });
-      $(this).attr('data-status', 'on');
-    }
+    $('.left').animate({ marginLeft: -210 });
+    $('.right').animate({ marginRight: -265 });
+    $('.share-lists').animate({ bottom: -120 });
+    $('.header').animate({ marginTop: -56 });
+    $('.opt-main').hide();
+    $('#noFullScreen').show();
+  });
+  $('#noFullScreen').click(function() {
+    $('.left').animate({ marginLeft: 0 });
+    $('.right').animate({ marginRight: 0 });
+    $('.share-lists').animate({ bottom: 0 });
+    $('.header').animate({ marginTop: 0 });
+    $('.opt-main').show();
+    $(this).hide();
   });
   $('#callAll').click(function() {
     ws.send(JSON.stringify({
