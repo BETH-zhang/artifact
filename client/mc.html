@@ -109,7 +109,7 @@
   <script type="text/javascript" src="./js/jquery.barrager.min.js"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
-  <script src="./js/music.js?t=6"></script>
+  <script src="./js/music.js?t=8"></script>
   <script src="./js/timeline-1.0.0-alpha.js"></script>
   <script src="./js/liveppt-1.0.0.js"></script>
   <script src="./js/message.js?t=2"></script>
@@ -297,17 +297,13 @@ var mainInit = function(ws) {
       receivePptMsg(0);
     }
   });
-  var zanStatus = 'off';
+
   $('#clickzan').click(function() {
-    if (zanStatus === 'off') {
-      zanStatus = 'on';
-      $('.zan-img').show();
-      bbMusic.changeMusic('./data/zan.mp3');
-    } else {
-      zanStatus = 'off';
+    $('.zan-img').show();
+    bbMusic.changeMusic('./data/zan.mp3', 1, function() {
       $('.zan-img').hide();
       bbMusic.initMusic();
-    }
+    });
   });
 }
 
@@ -407,6 +403,12 @@ var receiveOtherMsg = function(res) {
     mainFuncs.joinLiveList(res.data.lives);
     localStorage.setItem('peos', JSON.stringify(res.data.peos))
     localStorage.setItem('lives', JSON.stringify(res.data.lives));
+  } else if (res.data.eventType === 'click-zan') {
+    $('.zan-img').show();
+    bbMusic.changeMusic('./data/zan.mp3', 1, function() {
+      $('.zan-img').hide();
+      bbMusic.initMusic();
+    });
   }
 }
 

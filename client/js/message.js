@@ -25,7 +25,7 @@
     Message: function(name, message, startTime, order) {
       var className = Constant.classNames[utils.random(0, 7)];
       if (!order) {
-        // runBarrager(`${name || '匿名'}:${message}`);
+        runBarrager(`${name || '匿名'}:${message}`);
       }
       return `<div class="message-item message-${startTime}" style="min-height: 50px">
         <div class="avatar border ${className}">${name || '匿名'}</div>
@@ -50,7 +50,7 @@
         console.log(name, msg, 'msg---');
         var startTime = startTime || (new Date()).getTime();
         var html = Component.Message(name, msg, startTime, order);
-        if (order) {
+        if (true || order) {
           $('#message').prepend(html)
         } else {
           $('#message').append(html)

@@ -78,6 +78,8 @@
     
     <!-- Alert -->
     <div id="mess">正在连接...</div>
+
+    <div id="sendLove">赞</div>
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
@@ -215,6 +217,18 @@ var mainInit = function(ws) {
       }));
     }
     $('#inputMessage').val('');
+  });
+
+  $('#sendLove').click(function() {
+    ws.send(JSON.stringify({
+      connectType: Constant.CONNECT_TYPE.P2M,
+      moduleType: Constant.MODULE_TYPE.OTHER,
+      name: queryString.name,
+      data: {
+        eventType: 'click-zan',
+        message: queryString.name + '为你点赞'
+      },
+    }));
   });
 }
 

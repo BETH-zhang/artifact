@@ -79,7 +79,7 @@
                 <div class='time-bar-bg' style="width: 0px;"></div>
               </div>
               <span class="end-time">00:00</span>
-              <audio class='hide' src="" id="myAudio" controls loop></audio>
+              <audio class='hide' src="" id="myAudio" controls></audio>
             </div> 
           </div>
         </div>
@@ -92,7 +92,7 @@
           <div class="sourse-img-m start-rotate">
             <img src="./images/cover.jpg" alt="声波图" class="icont-rotate"/>
           </div>
-          <audio class='hide' src="" id="myAudio" controls loop></audio>
+          <audio class='hide' src="" id="myAudio" controls></audio>
         </div>
       `);
       $('body').append(`
@@ -117,9 +117,9 @@
       duration: '0:00',
       currentProgress: 0,
       poster: 'http://y.gtimg.cn/music/photo_new/T002R300x300M000003rsKF44GyaSk.jpg?max_age=2592000',
-      name: '爱上幼儿园',
-      author: '张庭',
-      src: '../data/2.mp3',
+      name: '佛系少女',
+      author: '冯提莫',
+      src: '../data/fxsn.mp3',
     }
 
     var secToTime = function (log) {
@@ -196,7 +196,7 @@
           me.config.duration = secToTime(me.audioCtx.duration);
           me.config.currentTime = secToTime(me.audioCtx.currentTime);
           me.config.progress = (me.audioCtx.currentTime / me.audioCtx.duration) * 100;
-          console.log(me.config.progress);
+          console.log(me.config.progress, me.config.duration, me.config.currentTime);
           $('.end-time').html(me.config.duration);
           $('.start-time').html(me.config.currentTime);
           $('.time-bar-bg').css({ width: me.config.progress + 'px' }); 
@@ -204,6 +204,7 @@
           if (me.audioCtx.currentTime >= me.audioCtx.duration) {
             clearInterval(me.timer);
             me.timer = null;
+
           }
         }, 1000);
       },
@@ -249,9 +250,10 @@
           this.timer = null;
         }
       },
-      changeMusic: function(src) {
+      changeMusic: function(src, times, callback) {
         this.audioCtx.src = src;
         this.audioPlay();
+        this.palyTimes(times, callback);
       },
       initMusic: function() {
         this.audioPause();
@@ -262,6 +264,18 @@
       },
       audioStart: function () {
         this.audioCtx.seek(0)
+      },
+      palyTimes: function(times, callback) {
+        var me = this;
+        this.startTimes = 0;
+        this.audioCtx.addEventListener('ended', function() {
+          me.startTimes++;
+          if (times === me.startTimes && callback) {
+            callback();
+          } else {
+            me.audioPlay();
+          }
+        });
       },
     }
   };

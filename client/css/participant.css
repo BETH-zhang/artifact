@@ -132,11 +132,21 @@ body {
   margin-top: 10px;
 }
 
-/* #sendLove {
+#sendLove {
   position: fixed;
   right: 5px;
-  bottom: 70px;
+  bottom: 100px;
+  width: 72px;
+  height: 72px;
+  line-height: 72px;
+  text-align: center;
+  font-size: 30px;
+  background: #03A9F4;
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #03A9F4;
 }
+/* 
 
 canvas {
 	display: block;
