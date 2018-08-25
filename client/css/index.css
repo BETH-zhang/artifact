@@ -113,7 +113,8 @@
 
 /* 酷黑样式 */
 body {
-  /* overflow: hidden; */
+  width: 100%;
+  overflow-x: hidden;
   background: #0f1316;
   color: #ccc;
   background: url('../images/bg.jpeg')
@@ -344,7 +345,7 @@ body {
   background-size: cover;
 }
 
-.center .ppt>img {
+.center .ppt .ppti img {
   width: 100%;
   display: none;
 }
@@ -461,10 +462,10 @@ body {
   margin-left: 0;
   width: 0;
   height: 0; */
-  width: 270;
-  height: 270;
-  margin-top: -135;
-  margin-left: -135;
+  width: 270px;
+  height: 270px;
+  margin-top: -135px;
+  margin-left: -135px;
   display: none;
 }
 

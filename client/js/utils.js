@@ -51,9 +51,12 @@ var Component = {
     </div>`;
   },
   LiveIndex: function(name, index, role, title) {
-    var className = Constant.classNames[1];
-    var value = '新人';
-    if (role === 'option1') {
+    var className = '';
+    var value = '';
+    if (role === 'option0') {
+      className = Constant.classNames[1];
+      value = '新人';
+    } else if (role === 'option1') {
       className = Constant.classNames[5];
       value = '工作汇报';
     } else if (role === 'option2') {

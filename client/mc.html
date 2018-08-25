@@ -19,7 +19,7 @@
       <a href="javascript:;" id="callAll">呼叫全部</a>
       <a href="javascript:;" id="sendLove">送爱心</a>
       <a href="javascript:;" id="openPPT">打开PPT</a>
-      <a href="javascript:;" id="playback">生成回放</a>
+      <!-- <a href="javascript:;" id="playback">生成回放</a> -->
       <a href="javascript:;" id="clickzan">点赞</a>
       <a href="javascript:;" id="noFullScreen" class="noFullScreen">回</a>
       <img src="./images/zan.gif" class="zan-img" />
@@ -47,10 +47,12 @@
       </div>
 
       <div class="ppt" id="ppt">
-        <img class="ppt0" src="./images/live1.jpeg" />
-        <img class="ppt1" src="./images/live2.jpeg" />
-        <img class="ppt2" src="./images/live3.jpeg" />
-        <img class="ppt3" src="./images/live4.jpeg" />
+        <div class="ppti" id="ppti">
+          <img class="ppt0" src="./images/live1.jpeg" />
+          <img class="ppt1" src="./images/live2.jpeg" />
+          <img class="ppt2" src="./images/live3.jpeg" />
+          <img class="ppt3" src="./images/live4.jpeg" />
+        </div>
         <iframe
           class="ppt-h5"
           src=""
@@ -137,7 +139,7 @@ function updatePPT(index) {
   var currentIndex = index || 0;
   // 初始化
   $('.btn-live').removeClass('btn-active');
-  $('.ppt>img').hide();
+  $('.ppti>img').hide();
 
   // 处理当前
   $(`.btn-live${currentIndex}`).addClass('btn-active');
@@ -205,7 +207,7 @@ var mainInit = function(ws) {
   }, 1000);
 
   // 初始化二维码
-  var realPath1 = document.location.origin + '/participant.html?mc=' + queryString.name;
+  var realPath1 = document.location.origin + '/part.html?mc=' + queryString.name;
   $peoQrcode.qrcode({
     text: realPath1,  //设置二维码内容
     width: 160,
@@ -244,6 +246,7 @@ var mainInit = function(ws) {
     $('.header').animate({ marginTop: -56 });
     $('.opt-main').hide();
     $('#noFullScreen').show();
+    $('#ppt-h5').height(($('#ppt-h5').width() + $('.left').width() + $('.left').width()) / (16 / 9));
   });
   $('#noFullScreen').click(function() {
     $('.left').animate({ marginLeft: 0 });
@@ -252,6 +255,7 @@ var mainInit = function(ws) {
     $('.header').animate({ marginTop: 0 });
     $('.opt-main').show();
     $(this).hide();
+    $('#ppt-h5').height(($('#ppt-h5').width() - $('.left').width() - $('.left').width()) / (16 / 9));
   });
   $('#callAll').click(function() {
     ws.send(JSON.stringify({
@@ -271,6 +275,8 @@ var mainInit = function(ws) {
       pptStatus = 'on';
       $('#ppt-h5').show();
       $(this).text('关闭PPT');
+      $('.ppti').hide();
+      $('.opt-main').hide();
 
       ws.send(JSON.stringify({
         connectType: Constant.CONNECT_TYPE.M2A,
@@ -286,6 +292,8 @@ var mainInit = function(ws) {
       pptStatus = 'off';
       $('#ppt-h5').hide();
       $(this).text('打开PPT');
+      $('.ppti').show();
+      $('.ppti').show();
 
       ws.send(JSON.stringify({
         connectType: Constant.CONNECT_TYPE.M2A,
@@ -351,12 +359,12 @@ var resetBindEvent = function() {
   $('.delete').bind('click', bindDelete);
 }
 
-var pptOrigin = 'http://172.16.15.185:8081';
+// var pptOrigin = 'http://172.16.15.185:8081';
+var pptOrigin = 'http://192.168.1.108:8080';
 // var pptOrigin = 'http://10.0.0.13:8081';
 
 var ws = null;
 var receivePptMsg = function(slide) {
-  console.log('1111', slide);
   if (slide < 0) {
     console.log('非法传入');
     return null;
@@ -380,10 +388,9 @@ var receivePptMsg = function(slide) {
       slide: slide,
       // step: 0,
       stepTotal: 1,
+      message: queryString.name + '切换PPT到第' + slide + 1 + '页'
     },
   });
-
-  console.log('1111', data);
 
   var iframe = window.frames[0];
   // 传递消息
@@ -419,7 +426,7 @@ var receiveConnect = function(res) {
   if (res.roleType === Constant.ROLE_TYPE.MC_INPUT && res.data.name) {
     window.location.href = document.location.origin + document.location.pathname
       + '?name=' + res.data.name;
-  } else if (res.roleType === Constant.ROLE_TYPE.PERSON && res.data.peos) {
+  } else if (res.roleType === Constant.ROLE_TYPE.PERSON && res.data.peos && res.name) {
     mainFuncs.joinParticipant(res.data);
     mainFuncs.joinLiveList(res.data.lives);
     localStorage.setItem('peos', JSON.stringify(res.data.peos))
@@ -454,8 +461,8 @@ var receiveMessage = function(res) {
 if(window.WebSocket){
   initLocalData();
 
-  ws = new WebSocket('ws://172.16.15.185:8001');
-  // var ws = new WebSocket('ws://192.168.1.106:8001');
+  // ws = new WebSocket('ws://172.16.15.185:8001');
+  var ws = new WebSocket('ws://192.168.1.108:8001');
   // var ws = new WebSocket('ws://10.0.0.13:8001');
   ws.onopen = function(e){
     console.log("连接服务器成功");
@@ -475,10 +482,10 @@ if(window.WebSocket){
   }
   
   ws.onclose = function(e){
-    message.push("MC", "~~服务器关闭");
+    message.push('MC', "~~您与服务端网络连接关闭");
   }
   ws.onerror = function(){
-    message.push("MC", "~~连接出错");
+    message.push('person', "~~您与服务端网连接出错");
   }
 
   ws.onmessage = function(e){
@@ -524,9 +531,11 @@ LivePPT.receiveEvent(pptOrigin, function(res) {
   ws.send(JSON.stringify({
     connectType: Constant.CONNECT_TYPE.M2A,
     moduleType: Constant.MODULE_TYPE.PPT,
+    name: queryString.name,
     data: Object.assign({}, {
       eventType: 'ppt',
       name: queryString.name,
+      message: '来自PPT的消息'
     }, res),
   }));
 });

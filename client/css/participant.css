@@ -1,6 +1,7 @@
 /* 酷黑样式 */
 body {
-  /* overflow: hidden; */
+  width: 100%;
+  overflow-x: hidden;
   background-color: #0f1316;
   color: #ccc;
   background-image: url('../images/bg.jpeg')

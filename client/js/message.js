@@ -26,12 +26,12 @@
 
   function barrager() {
     //发布一个弹幕
-    $('body').barrager({
-      info: msgData[0], //文字 
-      href: '', //链接
-      speed: 16,
-      close: false, //显示关闭按钮 
-    });
+    // $('body').barrager({
+    //   info: msgData[0], //文字 
+    //   href: '', //链接
+    //   speed: 16,
+    //   close: false, //显示关闭按钮 
+    // });
 
     msgData.splice(0, 1)
     //所有弹幕发布完毕，清除计时器。

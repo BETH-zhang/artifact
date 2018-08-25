@@ -36,6 +36,7 @@ var send = function(conn, text) {
 
 var recursionAsync = function(count, data, source, callback) {
   for (var i = 0; i < count; i++) {
+    send(data[i], source);
     if (i === count - 1) {
       if (callback) {
         callback();

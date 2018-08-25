@@ -105,7 +105,7 @@ var $replayYou = $('#replay-you');
 var queryString = utils.queryString();
 if (queryString.name) {
   var bbMusic = new BBMusic();
-  bbMusic.init();
+  bbMusic.init({ autoPlay: true });
   $main.show();
   $('.model').hide();
 } else {
@@ -191,7 +191,7 @@ var mainInit = function(ws) {
 
   $replayYou.click(function() {
     ws.send(JSON.stringify({
-      connectType: Constant.CONNECT_TYPE.P2P,
+      connectType: Constant.CONNECT_TYPE.P2M,
       moduleType: Constant.MODULE_TYPE.OTHER,
       name: queryString.name,
       from: queryString.name,
@@ -232,7 +232,8 @@ var mainInit = function(ws) {
   });
 }
 
-var pptOrigin = 'http://172.16.15.185:8081';
+// var pptOrigin = 'http://172.16.15.185:8081';
+var pptOrigin = 'http://192.168.1.108:8080';
 // var pptOrigin = 'http://10.0.0.13:8081';
 var receivePptMsg = function(res) {
   var iframe = window.frames[0];
@@ -291,8 +292,8 @@ var receiveMessage = function(res) {
 }
 
 if(window.WebSocket){
-    var ws = new WebSocket('ws://172.16.15.185:8001');
-    // var ws = new WebSocket('ws://192.168.1.106:8001');
+    // var ws = new WebSocket('ws://172.16.15.185:8001');
+    var ws = new WebSocket('ws://192.168.1.108:8001');
     // var ws = new WebSocket('ws://10.0.0.13:8001');
     ws.onopen = function(e){
       console.log("连接服务器成功");
@@ -315,10 +316,10 @@ if(window.WebSocket){
     }
     
     ws.onclose = function(e){
-      message.push('person', "~~服务器关闭", true);
+      message.push('person', "~~您与服务端网络连接关闭", true);
     }
     ws.onerror = function(){
-      message.push('person', "~~连接出错", true);
+      message.push('person', "~~您与服务端网连接出错", true);
     }
 
     ws.onmessage = function(e){
