@@ -167,3 +167,42 @@ canvas {
 	display: block;
 	z-index: 21;
 } */
+
+.zan-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 9;
+  /* margin-top: 0;
+  margin-left: 0;
+  width: 0;
+  height: 0; */
+  width: 270px;
+  height: 270px;
+  margin-top: -135px;
+  margin-left: -135px;
+  display: none;
+}
+
+.server-error {
+  cursor: pointer;
+  width: 70px;
+  height: 70px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 999;
+  margin-top: -35px;
+  margin-left: -35px;
+  background: #007bff;
+  border-radius: 50%;
+  color: #fff;
+  text-align: center;
+  line-height: 70px;
+  font-size: 20px;
+  display: none;
+}
+
+.ppt-h5 {
+  display: none;
+}

@@ -53,13 +53,14 @@ var Component = {
   LiveIndex: function(name, index, role, title) {
     var className = '';
     var value = '';
-    if (role === 'option0') {
+    console.log(name, index, role, title, '====');
+    if (role === 'option1') {
       className = Constant.classNames[1];
       value = '新人';
-    } else if (role === 'option1') {
+    } else if (role === 'option2') {
       className = Constant.classNames[5];
       value = '工作汇报';
-    } else if (role === 'option2') {
+    } else if (role === 'option3') {
       className = Constant.classNames[6];
       value = '分享';
     } else if (role === 'option3') {
@@ -111,12 +112,9 @@ var mainFuncs = {
   joinLiveList: function(lives) {
     if (lives) {
       var livesAry = Object.keys(lives);
-      var lastName = livesAry[livesAry.length - 1]
       var livesList = livesAry.map(function(item, index) {
-        if ('option' + currentStep !== lives[item].role) {
-          return null;
-        }
-        return Component.LiveIndex(item, currentStep, lives[item].role, lives[item].title);
+        console.log(livesAry, lives, item, '----');
+        return Component.LiveIndex(item, index, lives[item].role, lives[item].title);
       })
       $('.share-list').html(livesList.join('')).css({ width: livesAry.length * (120 + 24) + 'px' })
     }

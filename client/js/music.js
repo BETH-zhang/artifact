@@ -268,11 +268,13 @@
       palyTimes: function(times, callback) {
         var me = this;
         this.startTimes = 0;
+        console.log('playTimes');
         this.audioCtx.addEventListener('ended', function() {
+          console.log('end');
           me.startTimes++;
           if (times === me.startTimes && callback) {
             callback();
-          } else {
+          } else if (times > 1) {
             me.audioPlay();
           }
         });

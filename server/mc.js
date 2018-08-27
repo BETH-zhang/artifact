@@ -34,13 +34,15 @@ var send = function(conn, text) {
   }
 }
 
-var recursionAsync = function(count, data, source, callback) {
+var recursionAsync = function(count, data, source, currentName) {
   for (var i = 0; i < count; i++) {
-    send(data[i], source);
+    if (currentName !== data[i]) {
+      send(data[i], source);
+    }
     if (i === count - 1) {
-      if (callback) {
-        callback();
-      }
+      // if (callback) {
+      //   callback();
+      // }
     }
   }
   // console.log(count, peos[count])
@@ -89,23 +91,30 @@ function receiveConnect(conn, source, req) {
       mcReady[2] = conn;
       break;
     case Constant.ROLE_TYPE.PERSON:
-      var index = peos.indexOf(req.data.name);
-      if (peos.indexOf(req.data.name) === -1) {
-        peos.push(req.data.name);
+      var index = peos.indexOf(req.name);
+      console.log(peos, req.name, index)
+      if (index === -1) {
+        peos.push(req.name);
         peoReady.push(conn);
       } else {
-        peos[index] = req.data.name;
+        // 去重提示
+        // send(conn, JSON.stringify({
+        //   error: '已经有相同名字的设备连入'
+        // }));
+        // return null;
+        peos[index] = req.name;
         peoReady[index] = conn;
       }
       if (req.data.role) {
-        lives[req.data.name] = req.data;
+        lives[req.name] = req.data;
       }
       
       if (peoReady && peoReady.length) {
         recursionAsync(
           peoReady.length,
           peoReady,
-          newSource
+          newSource,
+          req.name
         )
       }
       send(mcReady[2], newSource)
@@ -142,9 +151,10 @@ function receiveMessage(conn, source, req) {
       break;
     case Constant.CONNECT_TYPE.M2S:
       if (req.moduleType === 'other' && req.data.eventType === 'delete') {
+        var index = peos.indexOf(req.data.name);
         peos.splice(index, 1)
         peoReady.splice(index, 1)
-        delete lives[data.name]
+        delete lives[req.data.name]
       }
       break;
     case Constant.CONNECT_TYPE.P2M:
@@ -156,7 +166,8 @@ function receiveMessage(conn, source, req) {
         recursionAsync(
           peoReady.length,
           peoReady,
-          newSource
+          newSource,
+          req.name
         )
       }
       break;

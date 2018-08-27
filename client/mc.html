@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>MC主界面</title>
   <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  <link rel="stylesheet" href="./css/index.css">
+  <link rel="stylesheet" href="./css/index.css?t=1">
   <link rel="stylesheet" href="./css/music.css">
   <link rel="stylesheet" href="./css/ppt.css">
   <link rel="stylesheet" type="text/css" href="./css/barrager.css">
@@ -16,11 +16,10 @@
     周例会<span class="mc">本周MC</span><span id="weekMc"></span>
     <div class="other-opt">
       <a href="javascript:;" data-status="off" id="fullScreen">全屏</a>
-      <a href="javascript:;" id="callAll">呼叫全部</a>
-      <a href="javascript:;" id="sendLove">送爱心</a>
+      <a href="javascript:;" id="callAll">呼叫</a>
+      <a href="javascript:;" id="clickzan">点赞</a>
       <a href="javascript:;" id="openPPT">打开PPT</a>
       <!-- <a href="javascript:;" id="playback">生成回放</a> -->
-      <a href="javascript:;" id="clickzan">点赞</a>
       <a href="javascript:;" id="noFullScreen" class="noFullScreen">回</a>
       <img src="./images/zan.gif" class="zan-img" />
 
@@ -104,6 +103,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Server -->
+  <div class="server-error">重连</div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
   <script src="https://cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.js"></script>
@@ -203,7 +205,10 @@ var mainInit = function(ws) {
 
   // 初始化时间
   setInterval(function() {
-    $('.time').html(new Date());
+    var now = new Date();
+    var minutes = Number(now.getMinutes()) < 10 ? `0${now.getMinutes()}` : now.getMinutes();
+    var seconds = Number(now.getSeconds()) < 10 ? `0${now.getSeconds()}` : now.getSeconds();
+    $('.time').html(now.getHours() + ':' + minutes + ':' + seconds);
   }, 1000);
 
   // 初始化二维码
@@ -293,7 +298,7 @@ var mainInit = function(ws) {
       $('#ppt-h5').hide();
       $(this).text('打开PPT');
       $('.ppti').show();
-      $('.ppti').show();
+      $('.opt-main').show();
 
       ws.send(JSON.stringify({
         connectType: Constant.CONNECT_TYPE.M2A,
@@ -302,10 +307,10 @@ var mainInit = function(ws) {
         name: queryString.name,
         data: {
           eventType: 'hide-ppt',
-          message: 'MC打开PPT',
+          message: 'MC关闭PPT',
         },
       }));
-      receivePptMsg(0);
+      // receivePptMsg(0);
     }
   });
 
@@ -315,6 +320,21 @@ var mainInit = function(ws) {
       $('.zan-img').hide();
       bbMusic.initMusic();
     });
+    ws.send(JSON.stringify({
+      name: queryString.name,
+      moduleType: Constant.MODULE_TYPE.OTHER,
+      connectType: Constant.CONNECT_TYPE.M2A,
+      from: 'mc',
+      name: queryString.name,
+      data: {
+        eventType: 'click-zan',
+        message: '点赞所有人',
+      },
+    }));
+  });
+
+  $('.server-error').click(function() {
+    window.location.href = window.location.href;
   });
 }
 
@@ -359,8 +379,8 @@ var resetBindEvent = function() {
   $('.delete').bind('click', bindDelete);
 }
 
-// var pptOrigin = 'http://172.16.15.185:8081';
-var pptOrigin = 'http://192.168.1.108:8080';
+var pptOrigin = 'http://172.16.15.185:8080';
+// var pptOrigin = 'http://192.168.1.108:8080';
 // var pptOrigin = 'http://10.0.0.13:8081';
 
 var ws = null;
@@ -413,7 +433,7 @@ var receiveOtherMsg = function(res) {
     mainFuncs.joinLiveList(res.data.lives);
     localStorage.setItem('peos', JSON.stringify(res.data.peos))
     localStorage.setItem('lives', JSON.stringify(res.data.lives));
-  } else if (res.data.eventType === 'click-zan') {
+  } else if (res.data.eventType === 'click-zan' && res.to === 'mc') {
     $('.zan-img').show();
     bbMusic.changeMusic('./data/zan.mp3', 1, function() {
       $('.zan-img').hide();
@@ -461,8 +481,8 @@ var receiveMessage = function(res) {
 if(window.WebSocket){
   initLocalData();
 
-  // ws = new WebSocket('ws://172.16.15.185:8001');
-  var ws = new WebSocket('ws://192.168.1.108:8001');
+  ws = new WebSocket('ws://172.16.15.185:8001');
+  // var ws = new WebSocket('ws://192.168.1.108:8001');
   // var ws = new WebSocket('ws://10.0.0.13:8001');
   ws.onopen = function(e){
     console.log("连接服务器成功");
@@ -482,15 +502,22 @@ if(window.WebSocket){
   }
   
   ws.onclose = function(e){
+    $('.server-error').show();
     message.push('MC', "~~您与服务端网络连接关闭");
   }
   ws.onerror = function(){
+    $('.server-error').show();
     message.push('person', "~~您与服务端网连接出错");
   }
 
   ws.onmessage = function(e){
     var res = JSON.parse(e.data) || {};
     console.log(res, '--------- MC接收消息 --------')
+    if (res.error) {
+      alert(res.error);
+      window.location.href = window.location.origin + window.location.pathname;
+      return null;
+    }
     if (res.roleType && !res.connectType) {
       receiveConnect(res);
     } else {

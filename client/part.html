@@ -62,7 +62,6 @@
         frameBorder=0
         allowTransparency
         allow="camera;microphone;autoplay"
-        style="display:none"
       ></iframe>
     </div>
 
@@ -80,22 +79,26 @@
     <div id="mess">正在连接...</div>
 
     <div id="sendLove">赞</div>
+    <img src="./images/zan.gif" class="zan-img" />
+
+    <!-- Server -->
+    <div class="server-error">重连</div>
   </div>
 
   <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
   <script src="https://res.wx.qq.com/mmbizwap/zh_CN/htmledition/js/vconsole/3.0.0/vconsole.min.js"></script>
   <script src="./js/utils.js"></script>
   <script src="./js/constant.js"></script>
-  <script src="./js/music.js?t=6"></script>
+  <script src="./js/music.js"></script>
   <!-- <script src="./js/timeline-1.0.0-alpha.js"></script> -->
   <script src="./js/liveppt-1.0.0.js"></script>
-  <script src="./js/message.js?t=2"></script>
+  <script src="./js/message.js"></script>
  
   <script>
 // 初始化
 var message = new Message(document.getElementById('mess'));
 
-    // var vConsole = new VConsole();
+// var vConsole = new VConsole();
 var $mess = $('#mess');
 var $mcInput = $('#mcInput');
 var $mcName = $('#mcName');
@@ -159,6 +162,7 @@ var init = function(ws) {
     if ($mcName.val()) {
       ws.send(JSON.stringify({
         roleType: Constant.ROLE_TYPE.PERSON,
+        name: $mcName.val(),
         data: {
           name: $mcName.val(),
           join: true, // 特殊标识
@@ -224,16 +228,22 @@ var mainInit = function(ws) {
       connectType: Constant.CONNECT_TYPE.P2M,
       moduleType: Constant.MODULE_TYPE.OTHER,
       name: queryString.name,
+      from: queryString.name,
+      to: 'mc',
       data: {
         eventType: 'click-zan',
         message: queryString.name + '为你点赞'
       },
     }));
   });
+
+  $('.server-error').click(function() {
+    window.location.href = window.location.href;
+  });
 }
 
-// var pptOrigin = 'http://172.16.15.185:8081';
-var pptOrigin = 'http://192.168.1.108:8080';
+var pptOrigin = 'http://172.16.15.185:8080';
+// var pptOrigin = 'http://192.168.1.108:8080';
 // var pptOrigin = 'http://10.0.0.13:8081';
 var receivePptMsg = function(res) {
   var iframe = window.frames[0];
@@ -242,10 +252,12 @@ var receivePptMsg = function(res) {
 }
 
 var receiveOtherMsg = function(res) {
-  console.log(res, '????');
   if (res.data.eventType === 'call' && res.from === 'mc') {
-    bbMusic.changeMusic('./data/call.mp3');
     $('.call-you').show()
+    bbMusic.changeMusic('./data/call.mp3', 1, function() {
+      bbMusic.initMusic();
+      $('.call-you').hide();
+    });
   } else if (res.data.eventType === 'call' && res.to === 'mc') {
     bbMusic.initMusic();
     $('.call-you').hide();
@@ -255,15 +267,21 @@ var receiveOtherMsg = function(res) {
     $('#ppt-h5').hide();
   } else if (res.data.eventType === 'show-ppt') {
     $('#ppt-h5').show();
+  } else if (res.data.eventType === 'click-zan' && res.from === 'mc') {
+    $('.zan-img').show();
+    bbMusic.changeMusic('./data/zan.mp3', 1, function() {
+      $('.zan-img').hide();
+      bbMusic.initMusic();
+    });
   }
 }
 
 var receiveConnect = function(res) {
   var msg = '~' + (res.data.message || '连接成功')
-  if (res.roleType === Constant.ROLE_TYPE.PERSON && res.data.name && res.data.join) {
+  if (res.roleType === Constant.ROLE_TYPE.PERSON && !queryString.name && res.data.join) {
     window.location.href = document.location.origin + document.location.pathname
-      + '?name=' + res.data.name;
-  } else if (res.data.name) {
+      + '?name=' + res.data.name + '&role=' + res.data.role;
+  } else if (res.name) {
     msg = `~${res.name}:加入~~~`;
   }
 
@@ -273,6 +291,8 @@ var receiveConnect = function(res) {
 var receiveMessage = function(res) {
   switch(res.moduleType) {
     case Constant.MODULE_TYPE.PPT:
+      console.log(res, '00000');
+      $('#ppt-h5').show();
       receivePptMsg(res.data);
       break;
     case Constant.MODULE_TYPE.MESSAGE:
@@ -292,8 +312,8 @@ var receiveMessage = function(res) {
 }
 
 if(window.WebSocket){
-    // var ws = new WebSocket('ws://172.16.15.185:8001');
-    var ws = new WebSocket('ws://192.168.1.108:8001');
+    var ws = new WebSocket('ws://172.16.15.185:8001');
+    // var ws = new WebSocket('ws://192.168.1.108:8001');
     // var ws = new WebSocket('ws://10.0.0.13:8001');
     ws.onopen = function(e){
       console.log("连接服务器成功");
@@ -316,15 +336,22 @@ if(window.WebSocket){
     }
     
     ws.onclose = function(e){
+      $('.server-error').show();
       message.push('person', "~~您与服务端网络连接关闭", true);
     }
+
     ws.onerror = function(){
+      $('.server-error').show();
       message.push('person', "~~您与服务端网连接出错", true);
     }
 
     ws.onmessage = function(e){
       var res = JSON.parse(e.data) || {};
       console.log(res, '--------- 参加者接收消息 --------')
+      if (res.error) {
+        alert(res.error);
+        return null;
+      }
       if (res.roleType && !res.connectType) {
         receiveConnect(res);
       } else {
